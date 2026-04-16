@@ -7,21 +7,44 @@ const SignUp = () => {
     name: "",
     email: "",
     password: "",
-    role: "user", // default role
+    city: "",
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Here you can call your API to register the user
-    console.log("Sign Up Data:", formData);
-    // Navigate to login or home after signup
-    navigate("/login");
-  };
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
+  try {
+    const res = await fetch("http://localhost:5000/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        city: formData.city   
+      }),
+    });
+
+    const data = await res.json();
+    console.log(data);
+
+    if (!res.ok) {
+      throw new Error(data.message || "Signup failed");
+    }
+
+    navigate("/login", { state: { success: true } });
+
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
+};
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F5E6]">
       <div className="bg-white rounded-xl shadow-lg p-10 w-full max-w-md">
@@ -63,8 +86,18 @@ const SignUp = () => {
             required
           />
 
+          <input
+              type="text"
+              name="city"
+              placeholder="City"
+              value={formData.city || ""}
+              onChange={handleChange}
+              className="px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#73946B]"
+              required
+            />
+
           {/* Role Selection */}
-          <select
+          {/* <select
             name="role"
             value={formData.role}
             onChange={handleChange}
@@ -72,7 +105,7 @@ const SignUp = () => {
           >
             <option value="user">User</option>
             <option value="authority">Authority</option>
-          </select>
+          </select> */}
 
           {/* Submit Button */}
           <button

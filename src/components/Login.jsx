@@ -1,54 +1,52 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
-
-  const [role, setRole] = useState("user"); // temporary (remove later when backend ready)
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+ const handleLogin = async (e) => {
+  e.preventDefault();
+  setLoading(true);
 
-    try {
-      // 🔥 Replace this with your backend API
-      // const res = await fetch("http://localhost:5000/api/auth/login", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ email, password }),
-      // });
-      // const data = await res.json();
+  try {
+    const res = await fetch("http://localhost:5000/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-      // ✅ TEMPORARY MOCK LOGIN (for now)
-      const data = {
-        user: {
-          email,
-          role: role, // will come from backend later
-        },
-        token: "dummy-token",
-      };
+    const data = await res.json();
+    console.log(data);
 
-      // ✅ Save to localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      // 🔥 Redirect based on role
-      if (data.user.role === "user") {
-        navigate("/dashboard");
-      } else if (data.user.role === "authority") {
-        navigate("/authority-dashboard");
-      }
-
-    } catch (error) {
-      console.error(error);
-      alert("Login failed");
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      throw new Error(data.message || "Login failed");
     }
-  };
+
+    // ✅ Store REAL token
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+
+    // ✅ Redirect based on role (from backend)
+    if (data.user.role === "authority") {
+      navigate("/authority-dashboard");
+    } else {
+      navigate("/dashboard");
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F5E6]">
@@ -58,9 +56,14 @@ const Login = () => {
         <h2 className="text-3xl font-bold text-[#537D5D] text-center mb-6">
           Login
         </h2>
+        {location.state?.success && (
+          <p className="text-green-600 text-center mb-4 font-medium">
+            Signup successful! Please login.
+          </p>
+        )}
 
         {/* Role Selection (temporary) */}
-        <div className="flex justify-center gap-4 mb-6">
+        {/* <div className="flex justify-center gap-4 mb-6">
           <button
             type="button"
             className={`px-4 py-2 rounded-full font-semibold transition ${
@@ -84,7 +87,7 @@ const Login = () => {
           >
             Authority
           </button>
-        </div>
+        </div> */}
 
         {/* Form */}
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
