@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 const SignUp = () => {
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -10,12 +11,17 @@ const SignUp = () => {
     city: "",
   });
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const [loading, setLoading] = useState(false);
 
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
   const handleSubmit = async (e) => {
   e.preventDefault();
+  setLoading(true);
 
   try {
     const res = await fetch("http://localhost:5000/api/auth/register", {
@@ -23,37 +29,40 @@ const SignUp = () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        city: formData.city   
-      }),
+      body: JSON.stringify(formData),
     });
 
-    const data = await res.json();
-    console.log(data);
+    const data = await res.json(); // simple parsing
+
+    console.log("Signup Response:", data);
 
     if (!res.ok) {
-      throw new Error(data.message || "Signup failed");
+      alert(data.message || "Signup failed");
+      return;
     }
 
-    navigate("/login", { state: { success: true } });
+    // ✅ Success
+    alert("Signup successful 🎉");
+    navigate("/login");
 
   } catch (error) {
-    console.error(error);
-    alert(error.message);
+    console.error("Signup Error:", error);
+    alert("Server error");
+  } finally {
+    setLoading(false);
   }
 };
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F5E6]">
       <div className="bg-white rounded-xl shadow-lg p-10 w-full max-w-md">
+
         <h2 className="text-3xl font-bold text-[#537D5D] mb-6 text-center">
           Sign Up
         </h2>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Name */}
+
           <input
             type="text"
             name="name"
@@ -64,7 +73,6 @@ const SignUp = () => {
             required
           />
 
-          {/* Email */}
           <input
             type="email"
             name="email"
@@ -75,7 +83,6 @@ const SignUp = () => {
             required
           />
 
-          {/* Password */}
           <input
             type="password"
             name="password"
@@ -87,32 +94,21 @@ const SignUp = () => {
           />
 
           <input
-              type="text"
-              name="city"
-              placeholder="City"
-              value={formData.city || ""}
-              onChange={handleChange}
-              className="px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#73946B]"
-              required
-            />
-
-          {/* Role Selection */}
-          {/* <select
-            name="role"
-            value={formData.role}
+            type="text"
+            name="city"
+            placeholder="City"
+            value={formData.city}
             onChange={handleChange}
             className="px-4 py-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#73946B]"
-          >
-            <option value="user">User</option>
-            <option value="authority">Authority</option>
-          </select> */}
+            required
+          />
 
-          {/* Submit Button */}
           <button
             type="submit"
-            className="bg-[#73946B] text-[#F5F5E6] px-4 py-3 rounded-md font-semibold hover:bg-[#9EBC8A]"
+            disabled={loading}
+            className="bg-[#73946B] text-[#F5F5E6] px-4 py-3 rounded-md font-semibold hover:bg-[#9EBC8A] disabled:opacity-50"
           >
-            Sign Up
+            {loading ? "Signing up..." : "Sign Up"}
           </button>
         </form>
 
@@ -122,6 +118,7 @@ const SignUp = () => {
             Login
           </Link>
         </p>
+
       </div>
     </div>
   );
