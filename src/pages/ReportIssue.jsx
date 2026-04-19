@@ -46,7 +46,7 @@ const ReportIssue = () => {
     formData.append("media", file);
 
     try {
-      await fetch("https://civicearth.onrender.com/api/reports", {
+      await fetch("http://localhost:5000/api/reports", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`

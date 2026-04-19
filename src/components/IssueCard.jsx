@@ -29,7 +29,7 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues }) => {
 
       // backend call
       await fetch(
-        `https://civicearth.onrender.com/api/reports/${issue._id}/like`,
+        `http://localhost:5000/api/reports/${issue._id}/like`,
         {
           method: "PUT",
           headers: {

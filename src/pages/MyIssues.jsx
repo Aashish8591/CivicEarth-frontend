@@ -9,7 +9,7 @@ const MyIssues = () => {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [commentText, setCommentText] = useState("");
 
-  const BASE_URL = "https://civicearth.onrender.com/";
+  const BASE_URL = "http://localhost:5000";
 
   const user = JSON.parse(localStorage.getItem("user"));
   const userId = user?.id || user?._id;
@@ -17,7 +17,7 @@ const MyIssues = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("https://civicearth.onrender.com/api/reports/my-reports", {
+    fetch("http://localhost:5000/api/reports/my-reports", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -35,7 +35,7 @@ const MyIssues = () => {
 
     try {
       const res = await fetch(
-        `https://civicearth.onrender.com/api/reports/${selectedIssue._id}/comment`,
+        `http://localhost:5000/api/reports/${selectedIssue._id}/comment`,
         {
           method: "POST",
           headers: {

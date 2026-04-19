@@ -14,12 +14,12 @@ const UserDashboard = () => {
   const [selectedIssue, setSelectedIssue] = useState(null);
 
   const navigate = useNavigate();
-  const BASE_URL = "https://civicearth.onrender.com/";
+  const BASE_URL = "http://localhost:5000";
 
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("https://civicearth.onrender.com/api/reports", {
+    fetch("http://localhost:5000/api/reports", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -101,7 +101,7 @@ const UserDashboard = () => {
               issue={{
                 ...issue,
                 image: issue.media?.[0]
-                  ? `${BASE_URL}${issue.media[0].url.replace("https://civicearth.onrender.com/", "")}`
+                  ? `${BASE_URL}${issue.media[0].url.replace("http://localhost:5000", "")}`
                   : "/placeholder.jpg",
               }}
               setSelectedIssue={setSelectedIssue}
