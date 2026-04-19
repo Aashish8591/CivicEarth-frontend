@@ -2,14 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import UserNavbar from "../components/UserNavbar";
-
-const getStatusColor = (status) => {
-  if (status === "in_progress") return "text-yellow-600";
-  if (status === "submitted") return "text-red-500";
-  if (status === "assigned") return "text-blue-500";
-  if (status === "resolved") return "text-green-600";
-  if (status === "rejected") return "text-gray-500";
-};
+import IssueCard from "../components/IssueCard";
 
 const UserDashboard = () => {
   const [issues, setIssues] = useState([]);
@@ -18,14 +11,15 @@ const UserDashboard = () => {
   const [status, setStatus] = useState("");
   const [city, setCity] = useState("");
   const [time, setTime] = useState("");
+  const [selectedIssue, setSelectedIssue] = useState(null);
 
   const navigate = useNavigate();
-  const BASE_URL = "http://localhost:5000";
+  const BASE_URL = "https://civicearth.onrender.com";
 
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("http://localhost:5000/api/reports", {
+    fetch("https://civicearth.onrender.com/api/reports", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -37,14 +31,16 @@ const UserDashboard = () => {
       .catch((err) => console.log(err));
   }, []);
 
-  const filteredIssues = (issues || []).filter((item) => {
+  const filteredIssues = issues.filter((item) => {
     const matchSearch = item.title
       ?.toLowerCase()
       .includes(search.toLowerCase());
 
     const matchCategory = category ? item.category === category : true;
     const matchStatus = status ? item.status === status : true;
-    const matchCity = city ? item.city === city : true;
+    const matchCity = city
+      ? item.city.toLowerCase() === city.toLowerCase()
+      : true;
 
     let matchTime = true;
     if (time) {
@@ -59,14 +55,11 @@ const UserDashboard = () => {
 
   return (
     <div className="bg-[#F8F9F4] min-h-screen text-[#537D5D]">
-
-      {/* Navbar */}
       <UserNavbar />
 
-      {/* CONTENT WRAPPER */}
       <div className="max-w-6xl mx-auto px-6 mt-6">
 
-        {/* FILTER BOX */}
+        {/* FILTERS */}
         <div className="bg-white p-4 rounded-xl shadow-md mb-6 flex flex-wrap gap-3">
 
           <select onChange={(e) => setCategory(e.target.value)} className="border px-3 py-2 rounded-md">
@@ -88,25 +81,6 @@ const UserDashboard = () => {
             <option value="rejected">Rejected</option>
           </select>
 
-          <select onChange={(e) => setCity(e.target.value)} className="border px-3 py-2 rounded-md">
-            <option value="">City</option>
-            <option value="thane">Thane</option>
-            <option value="dombivli">Dombivli</option>
-            <option value="kalyan">Kalyan</option>
-            <option value="ambernath">Ambernath</option>
-            <option value="badlapur">Badlapur</option>
-            <option value="neral">Neral</option>
-            <option value="shelu">Shelu</option>
-          </select>
-
-          <select onChange={(e) => setTime(e.target.value)} className="border px-3 py-2 rounded-md">
-            <option value="">Time</option>
-            <option value="1">Last 24 hrs</option>
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-          </select>
-
-          {/* Search */}
           <div className="flex items-center bg-gray-50 px-3 rounded-md border">
             <Search size={18} />
             <input
@@ -117,50 +91,89 @@ const UserDashboard = () => {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-
         </div>
 
         {/* CARDS */}
         <div className="grid md:grid-cols-3 gap-6">
           {filteredIssues.map((issue) => (
-            <div
+            <IssueCard
               key={issue._id}
-              className="bg-white rounded-xl shadow hover:shadow-xl transition duration-300 overflow-hidden"
-            >
-
-              {/* Media */}
-              {issue.media?.[0]?.type === "video" ? (
-                <video
-                  src={issue.media[0].url}
-                  className="h-40 w-full object-cover"
-                  controls
-                />
-              ) : (
-                <img
-                  src={`${BASE_URL}${issue.media?.[0]?.url.replace("http://localhost:5000", "")}`}
-                  className="h-40 w-full object-cover"
-                />
-              )}
-
-              {/* Content */}
-              <div className="p-4">
-                <p className={`text-sm font-semibold ${getStatusColor(issue.status)}`}>
-                  {issue.status.replace("_", " ").toUpperCase()}
-                </p>
-
-                <h2 className="text-lg font-bold mt-1">{issue.title}</h2>
-
-                <p className="text-gray-600 text-sm">{issue.description}</p>
-
-                <div className="flex justify-between text-xs text-gray-500 mt-3">
-                  <span>📍 {issue.city}</span>
-                  <span>📅 {new Date(issue.createdAt).toLocaleDateString()}</span>
-                </div>
-              </div>
-            </div>
+              issue={{
+                ...issue,
+                image: issue.media?.[0]
+                  ? `${BASE_URL}${issue.media[0].url.replace("https://civicearth.onrender.com", "")}`
+                  : "/placeholder.jpg",
+              }}
+              setSelectedIssue={setSelectedIssue}
+              setIssues={setIssues}
+            />
           ))}
         </div>
 
+        {/* POPUP */}
+        {/* 🔥 REPLACE ONLY POPUP PART WITH THIS */}
+
+{selectedIssue && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+    <div className="bg-white w-[500px] h-[600px] rounded-xl flex flex-col">
+
+      {/* HEADER */}
+      <div className="p-4 border-b">
+        <h2 className="font-semibold text-lg">
+          {selectedIssue.title}
+        </h2>
+      </div>
+
+      {/* IMAGE */}
+      <img
+        src={selectedIssue.image}
+        className="w-full h-52 object-cover"
+      />
+
+      {/* COMMENTS */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+
+        {(selectedIssue.comments || []).map((comment, index) => (
+          <div key={index} className="flex justify-between">
+
+            <div>
+              <p className="text-sm font-semibold text-[#537D5D]">
+                {comment.displayName}
+              </p>
+
+              <p className="text-sm text-gray-700">
+                {comment.text}
+              </p>
+            </div>
+
+            <span className="text-xs text-gray-400">
+              {comment.likes?.length || 0}
+            </span>
+
+          </div>
+        ))}
+
+      </div>
+
+      {/* INPUT */}
+      <div className="border-t p-3 flex gap-2">
+
+        <input
+          type="text"
+          placeholder="Add a comment..."
+          className="flex-1 border rounded-md px-3 py-2 text-sm outline-none"
+        />
+
+        <button className="text-[#537D5D] font-semibold">
+          Post
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+)}
       </div>
     </div>
   );
