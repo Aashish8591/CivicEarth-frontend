@@ -9,7 +9,7 @@ const MyIssues = () => {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [commentText, setCommentText] = useState("");
 
-  const BASE_URL = "https://civicearth.onrender.com";
+  const BASE_URL = "https://civicearth.onrender.com/";
 
   const user = JSON.parse(localStorage.getItem("user"));
   const userId = user?.id || user?._id;

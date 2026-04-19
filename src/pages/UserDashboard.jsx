@@ -14,7 +14,7 @@ const UserDashboard = () => {
   const [selectedIssue, setSelectedIssue] = useState(null);
 
   const navigate = useNavigate();
-  const BASE_URL = "https://civicearth.onrender.com";
+  const BASE_URL = "https://civicearth.onrender.com/";
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -101,7 +101,7 @@ const UserDashboard = () => {
               issue={{
                 ...issue,
                 image: issue.media?.[0]
-                  ? `${BASE_URL}${issue.media[0].url.replace("https://civicearth.onrender.com", "")}`
+                  ? `${BASE_URL}${issue.media[0].url.replace("https://civicearth.onrender.com/", "")}`
                   : "/placeholder.jpg",
               }}
               setSelectedIssue={setSelectedIssue}
