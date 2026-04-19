@@ -62,36 +62,34 @@ const MyIssues = () => {
     }
   };
 
-  // ✅ LIKE COMMENT (FINAL FIXED)
   const handleCommentLike = async (commentId) => {
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-  try {
-    const res = await fetch(
-      `https://civicearth.onrender.com/api/reports/${selectedIssue._id}/comment/${commentId}/like`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    // optimistic toggle
+    const toggle = (issue) => ({
+      ...issue,
+      comments: issue.comments.map((c) => {
+        if (c._id !== commentId) return c;
+        const alreadyLiked = c.likes?.some((id) => id.toString() === userId?.toString());
+        return {
+          ...c,
+          likes: alreadyLiked
+            ? c.likes.filter((id) => id.toString() !== userId?.toString())
+            : [...(c.likes || []), userId],
+        };
+      }),
+    });
 
-    const updated = await res.json();
+    setSelectedIssue((prev) => toggle(prev));
+    setIssues((prev) => prev.map((item) => item._id === selectedIssue._id ? toggle(item) : item));
 
-    // ✅ ONLY update from backend
-    setSelectedIssue(updated);
-
-    setIssues((prev) =>
-      prev.map((item) =>
-        item._id === updated._id ? updated : item
-      )
-    );
-
-  } catch (err) {
-    console.log(err);
-  }
-};
+    try {
+      await fetch(
+        `http://localhost:5000/api/reports/${selectedIssue._id}/comment/${commentId}/like`,
+        { method: "PUT", headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (err) { console.log(err); }
+  };
 
   const filteredIssues = issues.filter((item) =>
     item.title?.toLowerCase().includes(search.toLowerCase())

@@ -9,44 +9,6 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-      console.log(data);
-
-      if (!res.ok) {
-        throw new Error(data.message || "Login failed");
-      }
-
-      // ✅ Store REAL token
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      // ✅ Redirect based on role (from backend)
-      if (data.user.role === "authority") {
-        navigate("/authority-dashboard");
-      } else {
-        navigate("/dashboard");
-      }
-    } catch (error) {
-      console.error(error);
-      alert(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // const handleLogin = async (e) => {
   //   e.preventDefault();
   //   setLoading(true);
@@ -61,37 +23,75 @@ const Login = () => {
   //     });
 
   //     const data = await res.json();
+  //     console.log(data);
 
-  //     if (!res.ok) throw new Error();
+  //     if (!res.ok) {
+  //       throw new Error(data.message || "Login failed");
+  //     }
 
-  //     // ✅ REAL LOGIN
+  //     // ✅ Store REAL token
   //     localStorage.setItem("token", data.token);
   //     localStorage.setItem("user", JSON.stringify(data.user));
 
+  //     // ✅ Redirect based on role (from backend)
   //     if (data.user.role === "authority") {
   //       navigate("/authority-dashboard");
   //     } else {
   //       navigate("/dashboard");
   //     }
   //   } catch (error) {
-  //     console.log("⚠️ Backend not available, using demo login");
-
-  //     // ✅ FALLBACK DEMO LOGIN
-  //     const fakeUser = {
-  //       id: "1",
-  //       name: "Demo User",
-  //       email: email,
-  //       role: "user",
-  //     };
-
-  //     localStorage.setItem("user", JSON.stringify(fakeUser));
-  //     localStorage.setItem("token", "demo-token");
-
-  //     navigate("/dashboard");
+  //     console.error(error);
+  //     alert(error.message);
+  //   } finally {
+  //     setLoading(false);
   //   }
-
-  //   setLoading(false);
   // };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error();
+
+      // ✅ REAL LOGIN
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      if (data.user.role === "authority") {
+        navigate("/authority-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.log("⚠️ Backend not available, using demo login");
+
+      // ✅ FALLBACK DEMO LOGIN
+      const fakeUser = {
+        id: "1",
+        name: "Demo User",
+        email: email,
+        role: "user",
+      };
+
+      localStorage.setItem("user", JSON.stringify(fakeUser));
+      localStorage.setItem("token", "demo-token");
+
+      navigate("/dashboard");
+    }
+
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F5E6]">

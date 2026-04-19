@@ -8,11 +8,13 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
 
   const userId = user?.id || user?._id;
 
-  const isLiked =
-    issue.likes?.some((id) => id.toString() === userId) || false;
+  const isLiked = userId
+    ? issue.likes?.some((id) => id.toString() === userId.toString()) || false
+    : false;
 
   // ================= LIKE =================
   const handleLike = async () => {
+    if (!userId) return;
     try {
       setIssues((prev) =>
         prev.map((item) =>
@@ -20,22 +22,17 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
             ? {
                 ...item,
                 likes: isLiked
-                  ? item.likes.filter((id) => id.toString() !== userId)
+                  ? item.likes.filter((id) => id.toString() !== userId.toString())
                   : [...(item.likes || []), userId],
               }
             : item
         )
       );
 
-      await fetch(
-        `http://localhost:5000/api/reports/${issue._id}/like`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await fetch(`http://localhost:5000/api/reports/${issue._id}/like`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
     } catch (err) {
       console.error(err);
@@ -132,8 +129,37 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
         <span>{new Date(issue.createdAt).toLocaleDateString()}</span>
       </div>
 
+      {/* DEADLINE */}
+      {(() => {
+        const categoryDeadlines = { water: 1, garbage: 2, road: 3, air: 2, noise: 2, other: 4 };
+        const days = categoryDeadlines[issue.category] || 4;
+        const deadline = issue.deadline
+          ? new Date(issue.deadline)
+          : new Date(new Date(issue.createdAt).getTime() + days * 24 * 60 * 60 * 1000);
+        const daysLeft = Math.ceil((deadline - new Date()) / (1000 * 60 * 60 * 24));
+        const color = daysLeft < 0 ? "text-red-500" : daysLeft <= 1 ? "text-orange-500" : "text-green-600";
+        const label = daysLeft < 0 ? "Overdue" : daysLeft === 0 ? "Due today" : `${daysLeft}d left`;
+        return (
+          <div className={`text-xs font-medium mt-1 ${color}`}>
+            ⏰ Deadline: {deadline.toLocaleDateString()} ({label})
+          </div>
+        );
+      })()}
+
+      {/* AUTHORITY */}
+      <div className="text-xs mt-1">
+        {issue.assignedAuthority ? (
+          <span className="text-[#537D5D] font-medium">
+            🏛️ {issue.assignedAuthority.name} ({issue.assignedAuthority.type})
+          </span>
+        ) : (
+          <span className="text-gray-400">🏛️ No authority assigned yet</span>
+        )}
+      </div>
+
       {/* STATUS + PRIORITY */}
       <div className="flex justify-between items-center mt-2 flex-wrap gap-1">
+
 
         <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
           {issue.status}
