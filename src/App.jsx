@@ -8,6 +8,7 @@ import UserDashboard from "./pages/UserDashboard";
 import AuthorityDashboard from "./pages/AuthorityDashboard";
 import MyIssues from "./pages/MyIssues";
 import ReportIssue from "./pages/ReportIssue";
+import AssignedIssues from "./pages/AssignedIssues";
 
 const App = () => {
   return (
@@ -21,6 +22,7 @@ const App = () => {
         <Route path="/authority-dashboard" element={<AuthorityDashboard />} />
         <Route path="/my-issues" element={<MyIssues />} />
         <Route path="/report-issue" element={<ReportIssue />} />
+        <Route path="/assigned-issues" element={<AssignedIssues />} />
       </Routes>
     </>
   )

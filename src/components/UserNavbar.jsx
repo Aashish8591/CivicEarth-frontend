@@ -7,7 +7,6 @@ const UserNavbar = () => {
   const [openProfile, setOpenProfile] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
-  // ✅ SINGLE user state
   const [user, setUser] = useState(
     JSON.parse(localStorage.getItem("user")) || {}
   );
@@ -21,7 +20,9 @@ const UserNavbar = () => {
     displayName: ""
   });
 
-  // ✅ sync user → form
+  // 🔥 ROLE CHECK
+  const isAuthority = user?.role === "authority";
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -33,7 +34,6 @@ const UserNavbar = () => {
     }
   }, [user?.name, user?.email, user?.city, user?.displayName]);
 
-  // ✅ update function
   const handleUpdate = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -87,17 +87,34 @@ const UserNavbar = () => {
 
           {/* RIGHT */}
           <div className="flex items-center gap-4">
-            <button onClick={() => navigate("/dashboard")} className="text-[#537D5D] font-medium hover:underline">
+
+            <button
+              onClick={() =>
+                navigate(isAuthority ? "/authority-dashboard" : "/dashboard")
+              }
+              className="text-[#537D5D] font-medium hover:underline"
+            >
               Dashboard
             </button>
 
-            <button onClick={() => navigate("/my-issues")} className="text-[#537D5D] font-medium hover:underline">
-              My Issues
+            {/* 🔥 CHANGED BUTTON */}
+           <button
+              onClick={() =>
+                navigate(isAuthority ? "/assigned-issues" : "/my-issues")
+              }
+              className="text-[#537D5D] font-medium hover:underline"
+            >
+              {isAuthority ? "Assigned Issues" : "My Issues"}
             </button>
 
-            <button onClick={() => navigate("/report-issue")} className="bg-[#537D5D] text-white px-4 py-2 rounded-full shadow hover:bg-[#73946B] transition">
-              + Report
-            </button>
+            {!isAuthority && (
+              <button
+                onClick={() => navigate("/report-issue")}
+                className="bg-[#537D5D] text-white px-4 py-2 rounded-full shadow hover:bg-[#73946B] transition"
+              >
+                + Report
+              </button>
+            )}
 
             {/* PROFILE */}
             <div
@@ -114,10 +131,13 @@ const UserNavbar = () => {
       {openProfile && (
         <div className="absolute right-6 mt-2 w-64 bg-white shadow-lg rounded-xl p-4 z-50">
           <div className="mb-3">
-            <h2 className="font-semibold text-[#537D5D]">
+            {/* 🔥 FIX OVERFLOW */}
+            <h2 className="font-semibold text-[#537D5D] truncate">
               {user.displayName || user.name}
             </h2>
-            <p className="text-sm text-gray-500">{user.email}</p>
+            <p className="text-sm text-gray-500 truncate">
+              {user.email}
+            </p>
           </div>
 
           <hr />
@@ -149,31 +169,20 @@ const UserNavbar = () => {
       {/* PROFILE MODAL */}
       {showProfileModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
           <div className="bg-white rounded-2xl shadow-xl w-[400px] p-6">
 
             <h2 className="text-lg font-semibold mb-4 text-gray-700">
               Edit Profile
             </h2>
 
-            {/* Avatar */}
             <div className="flex justify-center mb-6">
               <div className="w-20 h-20 rounded-full bg-[#537D5D] text-white flex items-center justify-center text-2xl font-bold">
                 {user?.name?.charAt(0)?.toUpperCase() || "U"}
               </div>
             </div>
 
-            {/* FORM */}
             <div className="space-y-4">
 
-              {/* <input
-                className="w-full border rounded-lg px-3 py-2"
-                placeholder="Display Name"
-                value={formData.displayName}
-                onChange={(e) =>
-                  setFormData({ ...formData, displayName: e.target.value })
-                }
-              /> */}
               <p className="text-sm text-gray-500 text-center mb-2">
                 {user.displayName}
               </p>
@@ -206,7 +215,6 @@ const UserNavbar = () => {
               />
             </div>
 
-            {/* Buttons */}
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowProfileModal(false)}

@@ -1,7 +1,11 @@
 import React from 'react';
 import heroImage from '/heroImg.jpg'; 
+import { useNavigate } from "react-router-dom";
+
+
 
 const Hero = () => {
+  const navigate = useNavigate();
   return (
     <section id= "hero" className="bg-[#F5F5E6]">
       <div className="max-w-7xl mx-auto px-6 py-20 flex flex-col-reverse md:flex-row items-center gap-8">
@@ -16,7 +20,10 @@ const Hero = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-            <button className="bg-[#73946B] text-[#F5F5E6] px-6 py-3 rounded-md hover:bg-[#9EBC8A]">
+           <button
+              onClick={() => navigate("/login")}
+              className="bg-[#73946B] text-[#F5F5E6] px-6 py-3 rounded-md hover:bg-[#9EBC8A]"
+            >
               Report a Case
             </button>
             <button className="bg-[#537D5D] text-[#F5F5E6] px-6 py-3 rounded-md hover:bg-[#9EBC8A]">
