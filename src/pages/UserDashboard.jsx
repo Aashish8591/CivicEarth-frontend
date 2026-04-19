@@ -225,18 +225,13 @@ const UserDashboard = () => {
                   </p>
                 </div>
 
-                {/* AUTHORITY */}
+                {/* AUTHORITY RESPONSE */}
                 <div className="px-4 py-2 border-b">
-                  <p className="text-sm font-semibold text-[#537D5D]">🏛️ Assigned Authority</p>
-                  {selectedIssue.assignedAuthority ? (
-                    <p className="text-sm text-gray-700 mt-1">
-                      {selectedIssue.assignedAuthority.name} — {selectedIssue.assignedAuthority.type} ({selectedIssue.assignedAuthority.jurisdiction})
-                    </p>
+                  <p className="text-sm font-semibold text-[#537D5D]">Authority Response</p>
+                  {selectedIssue.authorityComment ? (
+                    <p className="text-sm text-gray-700 mt-1">{selectedIssue.authorityComment}</p>
                   ) : (
-                    <p className="text-gray-400 text-sm mt-1">No authority assigned yet for {selectedIssue.city}</p>
-                  )}
-                  {selectedIssue.authorityComment && (
-                    <p className="text-sm text-gray-600 mt-1 italic">"{selectedIssue.authorityComment}"</p>
+                    <p className="text-gray-400 text-sm mt-1">No response yet</p>
                   )}
                 </div>
 

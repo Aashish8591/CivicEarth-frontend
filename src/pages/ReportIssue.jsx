@@ -46,13 +46,23 @@ const ReportIssue = () => {
     formData.append("media", file);
 
     try {
-      await fetch("http://localhost:5000/api/reports", {
+      const res = await fetch("http://localhost:5000/api/reports", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`
         },
         body: formData
       });
+
+      const data = await res.json();
+
+      // auto assign authority
+      if (data.report?._id) {
+        await fetch(`http://localhost:5000/api/reports/${data.report._id}/assign`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
 
       navigate("/dashboard");
     } catch (error) {

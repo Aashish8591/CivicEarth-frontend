@@ -178,7 +178,7 @@ const MyIssues = () => {
                   </p>
                 </div>
 
-                {/* AUTHORITY */}
+                {/* AUTHORITY RESPONSE */}
                 <div className="px-4 py-2 border-b">
                   <p className="text-sm font-semibold text-[#537D5D]">
                     Authority Response
