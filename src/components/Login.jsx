@@ -1,51 +1,13 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // const handleLogin = async (e) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-
-  //   try {
-  //     const res = await fetch("http://localhost:5000/api/auth/login", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({ email, password }),
-  //     });
-
-  //     const data = await res.json();
-  //     console.log(data);
-
-  //     if (!res.ok) {
-  //       throw new Error(data.message || "Login failed");
-  //     }
-
-  //     // ✅ Store REAL token
-  //     localStorage.setItem("token", data.token);
-  //     localStorage.setItem("user", JSON.stringify(data.user));
-
-  //     // ✅ Redirect based on role (from backend)
-  //     if (data.user.role === "authority") {
-  //       navigate("/authority-dashboard");
-  //     } else {
-  //       navigate("/dashboard");
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //     alert(error.message);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -62,79 +24,57 @@ const Login = () => {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error();
+      console.log("LOGIN RESPONSE:", data); // 🔥 DEBUG
 
-      // ✅ REAL LOGIN
+      // ❌ If login failed
+      if (!res.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      // ❌ CRITICAL FIX: ensure token exists
+      if (!data.token) {
+        throw new Error("Token not received from server");
+      }
+
+      // ✅ Store properly
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      if (data.user.role === "authority") {
+      // ✅ Redirect
+      if (data.user?.role === "authority") {
         navigate("/authority-dashboard");
       } else {
         navigate("/dashboard");
       }
+
     } catch (error) {
-      console.log("⚠️ Backend not available, using demo login");
+      console.error("LOGIN ERROR:", error);
 
-      // ✅ FALLBACK DEMO LOGIN
-      const fakeUser = {
-        id: "1",
-        name: "Demo User",
-        email: email,
-        role: "user",
-      };
+      // ❌ Remove bad token if any
+      localStorage.removeItem("token");
 
-      localStorage.setItem("user", JSON.stringify(fakeUser));
-      localStorage.setItem("token", "demo-token");
-
-      navigate("/dashboard");
+      alert(error.message);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F5F5E6]">
       <div className="bg-white shadow-lg rounded-lg max-w-md w-full p-8 min-h-[500px]">
-        {/* Title */}
+
         <h2 className="text-3xl font-bold text-[#537D5D] text-center mb-6">
           Login
         </h2>
+
         {location.state?.success && (
           <p className="text-green-600 text-center mb-4 font-medium">
             Signup successful! Please login.
           </p>
         )}
 
-        {/* Role Selection (temporary) */}
-        {/* <div className="flex justify-center gap-4 mb-6">
-          <button
-            type="button"
-            className={`px-4 py-2 rounded-full font-semibold transition ${
-              role === "user"
-                ? "bg-[#73946B] text-white"
-                : "bg-[#D2D0A0] text-[#537D5D]"
-            }`}
-            onClick={() => setRole("user")}
-          >
-            User
-          </button>
-
-          <button
-            type="button"
-            className={`px-4 py-2 rounded-full font-semibold transition ${
-              role === "authority"
-                ? "bg-[#73946B] text-white"
-                : "bg-[#D2D0A0] text-[#537D5D]"
-            }`}
-            onClick={() => setRole("authority")}
-          >
-            Authority
-          </button>
-        </div> */}
-
-        {/* Form */}
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
+
           <input
             type="email"
             placeholder="Email"
@@ -160,15 +100,16 @@ const Login = () => {
           >
             {loading ? "Logging in..." : "Login"}
           </button>
+
         </form>
 
-        {/* Signup */}
         <p className="text-sm text-center text-gray-500 mt-4">
           Don't have an account?{" "}
           <Link to="/signup" className="text-[#73946B] hover:underline">
             Sign Up
           </Link>
         </p>
+
       </div>
     </div>
   );

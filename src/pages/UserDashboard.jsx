@@ -10,7 +10,6 @@ const UserDashboard = () => {
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
   const [city, setCity] = useState("");
-  const [time, setTime] = useState("");
   const [sort, setSort] = useState("latest");
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [commentText, setCommentText] = useState("");
@@ -21,54 +20,7 @@ const UserDashboard = () => {
   const user = JSON.parse(localStorage.getItem("user"));
   const userId = user?.id || user?._id;
 
-  const handleComment = async () => {
-    if (!commentText.trim()) return;
-    const token = localStorage.getItem("token");
-    try {
-      const res = await fetch(
-        `http://localhost:5000/api/reports/${selectedIssue._id}/comment`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ text: commentText }),
-        }
-      );
-      const updated = await res.json();
-      setSelectedIssue(updated);
-      setIssues((prev) => prev.map((item) => item._id === updated._id ? updated : item));
-      setCommentText("");
-    } catch (err) { console.log(err); }
-  };
-
-  const handleCommentLike = async (commentId) => {
-    const token = localStorage.getItem("token");
-
-    // optimistic toggle
-    const toggle = (issue) => ({
-      ...issue,
-      comments: issue.comments.map((c) => {
-        if (c._id !== commentId) return c;
-        const alreadyLiked = c.likes?.some((id) => id.toString() === userId?.toString());
-        return {
-          ...c,
-          likes: alreadyLiked
-            ? c.likes.filter((id) => id.toString() !== userId?.toString())
-            : [...(c.likes || []), userId],
-        };
-      }),
-    });
-
-    setSelectedIssue((prev) => toggle(prev));
-    setIssues((prev) => prev.map((item) => item._id === selectedIssue._id ? toggle(item) : item));
-
-    try {
-      await fetch(
-        `http://localhost:5000/api/reports/${selectedIssue._id}/comment/${commentId}/like`,
-        { method: "PUT", headers: { Authorization: `Bearer ${token}` } }
-      );
-    } catch (err) { console.log(err); }
-  };
-
+  // ================= FETCH ISSUES =================
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -78,47 +30,132 @@ const UserDashboard = () => {
       },
     })
       .then((res) => res.json())
-      .then((data) => {
-        setIssues(data.reports || []);
-      })
+      .then((data) => setIssues(data.reports || []))
       .catch((err) => console.log(err));
   }, []);
 
-  const filteredIssues = issues.filter((item) => {
-    const matchSearch = item.title
-      ?.toLowerCase()
-      .includes(search.toLowerCase());
+  // ================= COMMENT =================
+  const handleComment = async () => {
+    if (!commentText.trim()) return;
 
-    const matchCategory = category ? item.category === category : true;
-    const matchStatus = status ? item.status === status : true;
-    const matchCity = city
-      ? item.city.toLowerCase() === city.toLowerCase()
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/reports/${selectedIssue._id}/comment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ text: commentText }),
+        }
+      );
+
+      const updated = await res.json();
+
+      setSelectedIssue(updated);
+      setIssues((prev) =>
+        prev.map((item) => (item._id === updated._id ? updated : item))
+      );
+
+      setCommentText("");
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // ================= COMMENT LIKE =================
+  const handleCommentLike = async (commentId) => {
+    const token = localStorage.getItem("token");
+
+    const toggle = (issue) => ({
+      ...issue,
+      comments: issue.comments.map((c) => {
+        if (c._id !== commentId) return c;
+
+        const alreadyLiked = c.likes?.some(
+          (id) => id.toString() === userId?.toString()
+        );
+
+        return {
+          ...c,
+          likes: alreadyLiked
+            ? c.likes.filter(
+                (id) => id.toString() !== userId?.toString()
+              )
+            : [...(c.likes || []), userId],
+        };
+      }),
+    });
+
+    setSelectedIssue((prev) => toggle(prev));
+
+    setIssues((prev) =>
+      prev.map((item) =>
+        item._id === selectedIssue._id ? toggle(item) : item
+      )
+    );
+
+    try {
+      await fetch(
+        `${BASE_URL}/api/reports/${selectedIssue._id}/comment/${commentId}/like`,
+        {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // ================= FILTER LOGIC (FIXED) =================
+  const filteredIssues = issues.filter((item) => {
+    const matchSearch =
+      item.title?.toLowerCase().includes(search.toLowerCase()) ||
+      item.description?.toLowerCase().includes(search.toLowerCase());
+
+    const matchCategory = category
+      ? item.category?.toLowerCase() === category.toLowerCase()
       : true;
 
-    let matchTime = true;
-    if (time) {
-      const reportDate = new Date(item.createdAt);
-      const today = new Date();
-      const diff = (today - reportDate) / (1000 * 60 * 60 * 24);
-      matchTime = diff <= Number(time);
-    }
+    const matchStatus = status
+      ? item.status?.toLowerCase() === status.toLowerCase()
+      : true;
 
-    return matchSearch && matchCategory && matchStatus && matchCity && matchTime;
+    const matchCity = city
+      ? item.city?.toLowerCase() === city.toLowerCase()
+      : true;
+
+    return matchSearch && matchCategory && matchStatus && matchCity;
   });
 
-  const sortedIssues = [...filteredIssues].sort((a, b) => {
-    if (sort === "latest") return new Date(b.createdAt) - new Date(a.createdAt);
-    if (sort === "oldest") return new Date(a.createdAt) - new Date(b.createdAt);
-    if (sort === "24h") return new Date(b.createdAt) - new Date(a.createdAt);
-    if (sort === "7d") return new Date(b.createdAt) - new Date(a.createdAt);
-    return 0;
-  }).filter((item) => {
-    const now = new Date();
-    const diff = (now - new Date(item.createdAt)) / (1000 * 60 * 60);
-    if (sort === "24h") return diff <= 24;
-    if (sort === "7d") return diff <= 168;
-    return true;
-  });
+  // ================= SORT =================
+  const sortedIssues = [...filteredIssues]
+    .sort((a, b) => {
+      if (sort === "latest")
+        return new Date(b.createdAt) - new Date(a.createdAt);
+
+      if (sort === "oldest")
+        return new Date(a.createdAt) - new Date(b.createdAt);
+
+      if (sort === "24h" || sort === "7d")
+        return new Date(b.createdAt) - new Date(a.createdAt);
+
+      return 0;
+    })
+    .filter((item) => {
+      const now = new Date();
+      const diff =
+        (now - new Date(item.createdAt)) / (1000 * 60 * 60);
+
+      if (sort === "24h") return diff <= 24;
+      if (sort === "7d") return diff <= 168;
+
+      return true;
+    });
 
   return (
     <div className="bg-[#F8F9F4] min-h-screen text-[#537D5D]">
@@ -126,10 +163,14 @@ const UserDashboard = () => {
 
       <div className="max-w-6xl mx-auto px-6 mt-6">
 
-        {/* FILTERS */}
+        {/* ================= FILTER UI ================= */}
         <div className="bg-white p-4 rounded-xl shadow-md mb-6 flex flex-wrap gap-3">
 
-          <select onChange={(e) => setCategory(e.target.value)} className="border px-3 py-2 rounded-md">
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="border px-3 py-2 rounded-md"
+          >
             <option value="">Category</option>
             <option value="garbage">Garbage</option>
             <option value="water">Water</option>
@@ -139,7 +180,11 @@ const UserDashboard = () => {
             <option value="other">Other</option>
           </select>
 
-          <select onChange={(e) => setStatus(e.target.value)} className="border px-3 py-2 rounded-md">
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="border px-3 py-2 rounded-md"
+          >
             <option value="">Status</option>
             <option value="submitted">Submitted</option>
             <option value="assigned">Assigned</option>
@@ -148,14 +193,26 @@ const UserDashboard = () => {
             <option value="rejected">Rejected</option>
           </select>
 
-          <select onChange={(e) => setCity(e.target.value)} className="border px-3 py-2 rounded-md">
+          <select
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            className="border px-3 py-2 rounded-md"
+          >
             <option value="">City</option>
-            {[...new Set(issues.map((i) => i.city).filter(Boolean))].map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
+            {[...new Set(issues.map((i) => i.city).filter(Boolean))].map(
+              (c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              )
+            )}
           </select>
 
-          <select onChange={(e) => setSort(e.target.value)} className="border px-3 py-2 rounded-md">
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="border px-3 py-2 rounded-md"
+          >
             <option value="latest">Latest</option>
             <option value="oldest">Oldest</option>
             <option value="24h">Last 24 Hours</option>
@@ -174,7 +231,7 @@ const UserDashboard = () => {
           </div>
         </div>
 
-        {/* CARDS */}
+        {/* ================= CARDS ================= */}
         <div className="grid md:grid-cols-3 gap-6">
           {sortedIssues.map((issue) => (
             <IssueCard
@@ -182,7 +239,10 @@ const UserDashboard = () => {
               issue={{
                 ...issue,
                 image: issue.media?.[0]
-                  ? `${BASE_URL}${issue.media[0].url.replace("http://localhost:5000", "")}`
+                  ? `${BASE_URL}${issue.media[0].url.replace(
+                      "http://localhost:5000",
+                      ""
+                    )}`
                   : "/placeholder.jpg",
               }}
               setSelectedIssue={setSelectedIssue}
@@ -191,17 +251,24 @@ const UserDashboard = () => {
           ))}
         </div>
 
+        {/* ================= MODAL ================= */}
         {selectedIssue && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
             <div className="bg-white w-[900px] h-[520px] rounded-xl flex overflow-hidden relative">
 
-              <button onClick={() => setSelectedIssue(null)} className="absolute top-3 right-3 text-gray-500">
+              <button
+                onClick={() => setSelectedIssue(null)}
+                className="absolute top-3 right-3 text-gray-500"
+              >
                 <X size={20} />
               </button>
 
               {/* IMAGE */}
               <div className="w-1/2 bg-black">
-                <img src={selectedIssue.image} className="w-full h-full object-cover" />
+                <img
+                  src={selectedIssue.image}
+                  className="w-full h-full object-cover"
+                />
               </div>
 
               {/* RIGHT */}
@@ -212,69 +279,91 @@ const UserDashboard = () => {
                   <div className="w-8 h-8 bg-[#537D5D] text-white rounded-full flex items-center justify-center text-sm">
                     {selectedIssue.displayName?.charAt(0)}
                   </div>
-                  <p className="font-semibold">{selectedIssue.displayName}</p>
+                  <p className="font-semibold">
+                    {selectedIssue.displayName}
+                  </p>
                 </div>
 
                 {/* DETAILS */}
                 <div className="p-4 border-b text-sm">
                   <p className="font-semibold">{selectedIssue.title}</p>
-                  <p className="text-gray-600 mt-1">{selectedIssue.description}</p>
+                  <p className="text-gray-600 mt-1">
+                    {selectedIssue.description}
+                  </p>
                   <p className="text-xs text-gray-500 mt-2">
                     📍 {selectedIssue.city} •{" "}
-                    {new Date(selectedIssue.createdAt).toLocaleDateString()}
+                    {new Date(
+                      selectedIssue.createdAt
+                    ).toLocaleDateString()}
                   </p>
-                </div>
-
-                {/* AUTHORITY */}
-                <div className="px-4 py-2 border-b">
-                  <p className="text-sm font-semibold text-[#537D5D]">🏛️ Assigned Authority</p>
-                  {selectedIssue.assignedAuthority ? (
-                    <p className="text-sm text-gray-700 mt-1">
-                      {selectedIssue.assignedAuthority.name} — {selectedIssue.assignedAuthority.type} ({selectedIssue.assignedAuthority.jurisdiction})
-                    </p>
-                  ) : (
-                    <p className="text-gray-400 text-sm mt-1">No authority assigned yet for {selectedIssue.city}</p>
-                  )}
-                  {selectedIssue.authorityComment && (
-                    <p className="text-sm text-gray-600 mt-1 italic">"{selectedIssue.authorityComment}"</p>
-                  )}
                 </div>
 
                 {/* COMMENTS */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                   {selectedIssue.comments?.length > 0 ? (
                     selectedIssue.comments.map((c) => {
-                      const isLiked = c.likes?.some((id) => id.toString() === userId);
+                      const isLiked = c.likes?.some(
+                        (id) => id.toString() === userId
+                      );
+
                       return (
-                        <div key={c._id} className="flex justify-between items-center">
+                        <div
+                          key={c._id}
+                          className="flex justify-between items-center"
+                        >
                           <div className="text-sm">
-                            <span className="font-semibold mr-2">{c.displayName}</span>
+                            <span className="font-semibold mr-2">
+                              {c.displayName}
+                            </span>
                             {c.text}
                           </div>
-                          <button onClick={() => handleCommentLike(c._id)} className="flex items-center gap-1">
-                            <Heart size={16} className={`${isLiked ? "text-red-500 fill-red-500" : "text-gray-400"}`} />
-                            <span className="text-xs text-gray-600">{c.likes?.length || 0}</span>
+
+                          <button
+                            onClick={() =>
+                              handleCommentLike(c._id)
+                            }
+                            className="flex items-center gap-1"
+                          >
+                            <Heart
+                              size={16}
+                              className={
+                                isLiked
+                                  ? "text-red-500 fill-red-500"
+                                  : "text-gray-400"
+                              }
+                            />
+                            <span className="text-xs text-gray-600">
+                              {c.likes?.length || 0}
+                            </span>
                           </button>
                         </div>
                       );
                     })
                   ) : (
-                    <p className="text-gray-400 text-sm">No comments yet</p>
+                    <p className="text-gray-400 text-sm">
+                      No comments yet
+                    </p>
                   )}
                 </div>
 
                 {/* INPUT */}
                 <div className="border-t p-3">
-                  <p className="text-sm font-semibold mb-2">{selectedIssue.likes?.length || 0} likes</p>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
+                      onChange={(e) =>
+                        setCommentText(e.target.value)
+                      }
                       placeholder="Add a comment..."
                       className="flex-1 border rounded-md px-3 py-2 text-sm outline-none"
                     />
-                    <button onClick={handleComment} className="text-[#537D5D] font-semibold">Post</button>
+                    <button
+                      onClick={handleComment}
+                      className="text-[#537D5D] font-semibold"
+                    >
+                      Post
+                    </button>
                   </div>
                 </div>
 

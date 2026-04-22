@@ -88,7 +88,11 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
 
       {/* IMAGE */}
       <img
-        src={issue.image || "/placeholder.jpg"}
+        src={
+          issue.image && issue.image !== "http://localhost:5000undefined"
+            ? issue.image
+            : "https://via.placeholder.com/400"
+        }
         alt="report"
         className="w-full h-40 object-cover rounded-lg mb-2"
       />

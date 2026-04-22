@@ -23,7 +23,20 @@ const MyIssues = () => {
       },
     })
       .then((res) => res.json())
-      .then((data) => setIssues(data.reports || []))
+      .then((data) => {
+        // ✅ FIX: attach image here
+        const updated = (data.reports || []).map((issue) => ({
+          ...issue,
+         image:
+        issue.media && issue.media.length > 0
+          ? issue.media[0].url.startsWith("http")
+            ? issue.media[0].url
+            : `http://localhost:5000${issue.media[0].url}`
+          : "",
+        }));
+
+        setIssues(updated);
+      })
       .catch((err) => console.log(err));
   }, []);
 
@@ -52,7 +65,7 @@ const MyIssues = () => {
 
       setIssues((prev) =>
         prev.map((item) =>
-          item._id === updated._id ? updated : item
+          item._id === updated._id ? { ...updated, image: item.image } : item
         )
       );
 
@@ -65,30 +78,39 @@ const MyIssues = () => {
   const handleCommentLike = async (commentId) => {
     const token = localStorage.getItem("token");
 
-    // optimistic toggle
     const toggle = (issue) => ({
       ...issue,
       comments: issue.comments.map((c) => {
         if (c._id !== commentId) return c;
-        const alreadyLiked = c.likes?.some((id) => id.toString() === userId?.toString());
+        const alreadyLiked = c.likes?.some(
+          (id) => id.toString() === userId?.toString()
+        );
         return {
           ...c,
           likes: alreadyLiked
-            ? c.likes.filter((id) => id.toString() !== userId?.toString())
+            ? c.likes.filter(
+                (id) => id.toString() !== userId?.toString()
+              )
             : [...(c.likes || []), userId],
         };
       }),
     });
 
     setSelectedIssue((prev) => toggle(prev));
-    setIssues((prev) => prev.map((item) => item._id === selectedIssue._id ? toggle(item) : item));
+    setIssues((prev) =>
+      prev.map((item) =>
+        item._id === selectedIssue._id ? toggle(item) : item
+      )
+    );
 
     try {
       await fetch(
         `http://localhost:5000/api/reports/${selectedIssue._id}/comment/${commentId}/like`,
         { method: "PUT", headers: { Authorization: `Bearer ${token}` } }
       );
-    } catch (err) { console.log(err); }
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const filteredIssues = issues.filter((item) =>
@@ -100,7 +122,6 @@ const MyIssues = () => {
       <UserNavbar />
 
       <div className="max-w-6xl mx-auto px-6 mt-6">
-
         {/* SEARCH */}
         <div className="bg-white p-4 rounded-xl shadow-md mb-6 flex gap-3">
           <div className="flex items-center bg-gray-50 px-3 rounded-md border">
@@ -120,13 +141,7 @@ const MyIssues = () => {
           {filteredIssues.map((issue) => (
             <IssueCard
               key={issue._id}
-              issue={{
-                ...issue,
-                image: `${BASE_URL}${issue.media?.[0]?.url?.replace(
-                  "https://civicearth.onrender.com",
-                  ""
-                )}`,
-              }}
+              issue={issue} // ✅ already has image now
               setSelectedIssue={setSelectedIssue}
               setIssues={setIssues}
             />
@@ -136,9 +151,7 @@ const MyIssues = () => {
         {/* 🔥 POPUP */}
         {selectedIssue && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-
             <div className="bg-white w-[900px] h-[520px] rounded-xl flex overflow-hidden relative">
-
               {/* CLOSE */}
               <button
                 onClick={() => setSelectedIssue(null)}
@@ -157,13 +170,14 @@ const MyIssues = () => {
 
               {/* RIGHT */}
               <div className="w-1/2 flex flex-col">
-
                 {/* USER */}
                 <div className="flex items-center gap-2 p-4 border-b">
                   <div className="w-8 h-8 bg-[#537D5D] text-white rounded-full flex items-center justify-center text-sm">
                     {selectedIssue.displayName?.charAt(0)}
                   </div>
-                  <p className="font-semibold">{selectedIssue.displayName}</p>
+                  <p className="font-semibold">
+                    {selectedIssue.displayName}
+                  </p>
                 </div>
 
                 {/* DETAILS */}
@@ -174,7 +188,9 @@ const MyIssues = () => {
                   </p>
                   <p className="text-xs text-gray-500 mt-2">
                     📍 {selectedIssue.city} •{" "}
-                    {new Date(selectedIssue.createdAt).toLocaleDateString()}
+                    {new Date(
+                      selectedIssue.createdAt
+                    ).toLocaleDateString()}
                   </p>
                 </div>
 
@@ -215,7 +231,9 @@ const MyIssues = () => {
                           </div>
 
                           <button
-                            onClick={() => handleCommentLike(c._id)}
+                            onClick={() =>
+                              handleCommentLike(c._id)
+                            }
                             className="flex items-center gap-1"
                           >
                             <Heart
@@ -250,7 +268,9 @@ const MyIssues = () => {
                     <input
                       type="text"
                       value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
+                      onChange={(e) =>
+                        setCommentText(e.target.value)
+                      }
                       placeholder="Add a comment..."
                       className="flex-1 border rounded-md px-3 py-2 text-sm outline-none"
                     />
@@ -262,7 +282,6 @@ const MyIssues = () => {
                     </button>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
