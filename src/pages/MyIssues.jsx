@@ -59,9 +59,13 @@ const MyIssues = () => {
         }
       );
 
-      const updated = await res.json();
+      const resData = await res.json();
+      const updated = resData.report;   // 👈 FIX
 
-      setSelectedIssue(updated);
+      setSelectedIssue({
+        ...updated,
+        image: selectedIssue.image
+      });
 
       setIssues((prev) =>
         prev.map((item) =>
@@ -75,43 +79,40 @@ const MyIssues = () => {
     }
   };
 
-  const handleCommentLike = async (commentId) => {
-    const token = localStorage.getItem("token");
+ const handleCommentLike = async (commentId) => {
+  const token = localStorage.getItem("token");
 
-    const toggle = (issue) => ({
-      ...issue,
-      comments: issue.comments.map((c) => {
-        if (c._id !== commentId) return c;
-        const alreadyLiked = c.likes?.some(
-          (id) => id.toString() === userId?.toString()
-        );
-        return {
-          ...c,
-          likes: alreadyLiked
-            ? c.likes.filter(
-                (id) => id.toString() !== userId?.toString()
-              )
-            : [...(c.likes || []), userId],
-        };
-      }),
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/reports/${selectedIssue._id}/comment/${commentId}/like`,
+      {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    const resData = await res.json();
+    const updated = resData.report; // 🔥 backend truth
+
+    // ✅ update popup
+    setSelectedIssue({
+      ...updated,
+      image: selectedIssue.image,
     });
 
-    setSelectedIssue((prev) => toggle(prev));
+    // ✅ update list
     setIssues((prev) =>
       prev.map((item) =>
-        item._id === selectedIssue._id ? toggle(item) : item
+        item._id === updated._id
+          ? { ...updated, image: item.image }
+          : item
       )
     );
 
-    try {
-      await fetch(
-        `http://localhost:5000/api/reports/${selectedIssue._id}/comment/${commentId}/like`,
-        { method: "PUT", headers: { Authorization: `Bearer ${token}` } }
-      );
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  } catch (err) {
+    console.log(err);
+  }
+};
 
   const filteredIssues = issues.filter((item) =>
     item.title?.toLowerCase().includes(search.toLowerCase())

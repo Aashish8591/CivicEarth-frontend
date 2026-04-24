@@ -1,42 +1,37 @@
 import React, { useState, useEffect } from "react";
-<<<<<<< HEAD
 import { Search, X, Heart, MapPin, Clock, CheckCircle, XCircle, PlayCircle, MessageCircle } from "lucide-react";
 import UserNavbar from "../components/UserNavbar";
 import IssueCard from "../components/IssueCard";
 
 const STATUS_CONFIG = {
-  submitted:   { label: "Submitted",   bg: "bg-blue-100",   text: "text-blue-700",   dot: "bg-blue-500" },
-  assigned:    { label: "Assigned",    bg: "bg-purple-100", text: "text-purple-700", dot: "bg-purple-500" },
+  submitted: { label: "Submitted", bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-500" },
+  assigned: { label: "Assigned", bg: "bg-purple-100", text: "text-purple-700", dot: "bg-purple-500" },
   in_progress: { label: "In Progress", bg: "bg-yellow-100", text: "text-yellow-700", dot: "bg-yellow-500" },
-  resolved:    { label: "Resolved",    bg: "bg-green-100",  text: "text-green-700",  dot: "bg-green-500" },
-  rejected:    { label: "Rejected",    bg: "bg-red-100",    text: "text-red-700",    dot: "bg-red-500" },
+  resolved: { label: "Resolved", bg: "bg-green-100", text: "text-green-700", dot: "bg-green-500" },
+  rejected: { label: "Rejected", bg: "bg-red-100", text: "text-red-700", dot: "bg-red-500" },
 };
 
 const PRIORITY_CONFIG = {
-  high:   { bg: "bg-red-100",    text: "text-red-700" },
+  high: { bg: "bg-red-100", text: "text-red-700" },
   medium: { bg: "bg-orange-100", text: "text-orange-700" },
-  low:    { bg: "bg-green-100",  text: "text-green-700" },
+  low: { bg: "bg-green-100", text: "text-green-700" },
 };
 
-=======
-import { Search } from "lucide-react";
-import UserNavbar from "../components/UserNavbar";
-import IssueCard from "../components/IssueCard";
-
->>>>>>> 6ff68f33e072e17b0b84faeaaa02cf56eb9c0a00
 const AuthorityDashboard = () => {
   const [issues, setIssues] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
   const [selectedIssue, setSelectedIssue] = useState(null);
-<<<<<<< HEAD
   const [commentText, setCommentText] = useState("");
   const [actionLoading, setActionLoading] = useState(null);
   const [commentLoading, setCommentLoading] = useState(false);
 
   const BASE_URL = "http://localhost:5000";
   const user = JSON.parse(localStorage.getItem("user"));
+  const isAssignedAuthority =
+  selectedIssue?.assignedAuthority?._id === user?.authorityId ||
+  selectedIssue?.assignedAuthority === user?.authorityId;
   const userId = user?.id || user?._id;
 
   useEffect(() => {
@@ -110,6 +105,46 @@ const AuthorityDashboard = () => {
     }
     setCommentLoading(false);
   };
+  const handleResponseSubmit = async () => {
+  if (!commentText.trim()) return;
+
+  setCommentLoading(true);
+  const token = localStorage.getItem("token");
+
+  try {
+    const formData = new FormData();
+    formData.append("text", commentText);
+
+    const res = await fetch(
+      `${BASE_URL}/api/reports/${selectedIssue._id}/response`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      }
+    );
+
+    const data = await res.json();
+
+    if (res.ok) {
+      setSelectedIssue(data.report);
+      setIssues((prev) =>
+        prev.map((i) =>
+          i._id === data.report._id ? data.report : i
+        )
+      );
+      setCommentText("");
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+
+  setCommentLoading(false);
+};
 
   const getDeadlineInfo = (issue) => {
     const categoryDeadlines = { water: 1, garbage: 2, road: 3, air: 2, noise: 2, other: 4 };
@@ -130,44 +165,12 @@ const AuthorityDashboard = () => {
 
   const isResolved = selectedIssue?.response?.images?.length > 0 || selectedIssue?.status === "resolved" || selectedIssue?.status === "rejected";
 
-=======
-
-  const BASE_URL = "http://localhost:5000";
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    fetch("http://localhost:5000/api/reports", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setIssues(data.reports || []);
-      })
-      .catch((err) => console.log(err));
-  }, []);
-
-  const filteredIssues = issues.filter((item) => {
-    const matchSearch = item.title
-      ?.toLowerCase()
-      .includes(search.toLowerCase());
-
-    const matchCategory = category ? item.category === category : true;
-    const matchStatus = status ? item.status === status : true;
-
-    return matchSearch && matchCategory && matchStatus;
-  });
-
->>>>>>> 6ff68f33e072e17b0b84faeaaa02cf56eb9c0a00
   return (
     <div className="bg-[#F8F9F4] min-h-screen text-[#537D5D]">
       <UserNavbar />
 
       <div className="max-w-6xl mx-auto px-6 mt-6">
 
-<<<<<<< HEAD
         <h2 className="text-xl font-semibold mb-4">Assigned Issues</h2>
 
         {/* FILTERS */}
@@ -178,21 +181,6 @@ const AuthorityDashboard = () => {
             className="border border-gray-200 px-3 py-2 rounded-lg text-sm text-gray-600 outline-none"
           >
             <option value="">All Categories</option>
-=======
-        {/* 🔥 Title change */}
-        <h2 className="text-xl font-semibold mb-4">
-          Assigned Issues
-        </h2>
-
-        {/* FILTERS */}
-        <div className="bg-white p-4 rounded-xl shadow-md mb-6 flex flex-wrap gap-3">
-
-          <select
-            onChange={(e) => setCategory(e.target.value)}
-            className="border px-3 py-2 rounded-md"
-          >
-            <option value="">Category</option>
->>>>>>> 6ff68f33e072e17b0b84faeaaa02cf56eb9c0a00
             <option value="garbage">Garbage</option>
             <option value="water">Water</option>
             <option value="road">Road</option>
@@ -202,18 +190,11 @@ const AuthorityDashboard = () => {
           </select>
 
           <select
-<<<<<<< HEAD
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             className="border border-gray-200 px-3 py-2 rounded-lg text-sm text-gray-600 outline-none"
           >
             <option value="">All Statuses</option>
-=======
-            onChange={(e) => setStatus(e.target.value)}
-            className="border px-3 py-2 rounded-md"
-          >
-            <option value="">Status</option>
->>>>>>> 6ff68f33e072e17b0b84faeaaa02cf56eb9c0a00
             <option value="submitted">Submitted</option>
             <option value="assigned">Assigned</option>
             <option value="in_progress">In Progress</option>
@@ -221,26 +202,16 @@ const AuthorityDashboard = () => {
             <option value="rejected">Rejected</option>
           </select>
 
-<<<<<<< HEAD
           <div className="flex items-center bg-gray-50 px-3 rounded-lg border border-gray-200 flex-1 min-w-[200px]">
             <Search size={16} className="text-gray-400" />
             <input
               type="text"
               placeholder="Search issues..."
               className="px-2 py-2 outline-none bg-transparent text-sm flex-1"
-=======
-          <div className="flex items-center bg-gray-50 px-3 rounded-md border">
-            <Search size={18} />
-            <input
-              type="text"
-              placeholder="Search issues..."
-              className="px-2 py-1 outline-none bg-transparent"
->>>>>>> 6ff68f33e072e17b0b84faeaaa02cf56eb9c0a00
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-<<<<<<< HEAD
 
           <span className="text-sm text-gray-400 ml-auto">{filteredIssues.length} issues</span>
         </div>
@@ -345,6 +316,7 @@ const AuthorityDashboard = () => {
                     )}
                   </div>
 
+
                   {/* DESCRIPTION + DEADLINE */}
                   <div className="px-5 py-3 border-b">
                     <p className="text-sm text-gray-700 leading-relaxed">{selectedIssue.description}</p>
@@ -354,8 +326,32 @@ const AuthorityDashboard = () => {
                     </div>
                   </div>
 
+                  {/* RESPONSE */}
+            {selectedIssue.response?.text && (
+              <div className="px-5 py-3 border-b bg-green-50">
+                <p className="text-xs font-semibold text-green-700 mb-1">
+                  Authority Response
+                </p>
+                <p className="text-sm text-gray-700">
+                  {selectedIssue.response.text}
+                </p>
+              </div>
+            )}
+
+            {/* PROOF */}
+            {selectedIssue.response?.images?.length > 0 && (
+              <div className="px-5 py-3 border-b">
+                <p className="text-xs font-semibold mb-2">Proof</p>
+                <div className="flex gap-2">
+                  {selectedIssue.response.images.map((img, i) => (
+                    <img key={i} src={img} className="w-20 h-20 object-cover rounded" />
+                  ))}
+                </div>
+              </div>
+            )}
+
                   {/* ACTION BUTTONS */}
-                  {!isResolved ? (
+                  {selectedIssue?.status !== "resolved" && isAssignedAuthority && (
                     <div className="px-5 py-3 border-b bg-gray-50">
                       <p className="text-xs text-gray-400 font-medium mb-2 uppercase tracking-wide">Update Status</p>
                       <div className="flex gap-2 flex-wrap">
@@ -367,14 +363,14 @@ const AuthorityDashboard = () => {
                           <PlayCircle size={14} />
                           {actionLoading === "in_progress" ? "Starting..." : "Start"}
                         </button>
-                        <button
+                        {/* <button
                           disabled={actionLoading !== null || selectedIssue.status === "resolved"}
                           onClick={() => updateStatus("resolved")}
                           className="flex items-center gap-1.5 px-4 py-2 bg-[#537D5D] hover:bg-[#3f6147] text-white rounded-lg text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          <CheckCircle size={14} />
+                        > */}
+                          {/* <CheckCircle size={14} />
                           {actionLoading === "resolved" ? "Resolving..." : "Resolve"}
-                        </button>
+                        </button> */}
                         <button
                           disabled={actionLoading !== null || selectedIssue.status === "rejected"}
                           onClick={() => updateStatus("rejected")}
@@ -385,14 +381,15 @@ const AuthorityDashboard = () => {
                         </button>
                       </div>
                     </div>
-                  ) : (
+                  )} : (
                     <div className="px-5 py-3 border-b bg-green-50 flex items-center gap-2">
                       <CheckCircle size={16} className="text-green-600" />
                       <p className="text-sm text-green-700 font-medium">
                         {selectedIssue.status === "rejected" ? "This issue has been rejected." : "This issue has been resolved."}
                       </p>
                     </div>
-                  )}
+                  )
+                
 
                   {/* COMMENTS */}
                   <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
@@ -421,116 +418,44 @@ const AuthorityDashboard = () => {
                   </div>
 
                   {/* COMMENT INPUT */}
-                  <div className="border-t px-5 py-3 bg-white">
-                    <div className="flex gap-2 items-center">
-                      <div className="w-7 h-7 bg-[#537D5D] text-white rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                        {user?.displayName?.charAt(0)?.toUpperCase() || "A"}
+                  {selectedIssue?.status === "in_progress" &&
+                  isAssignedAuthority && (
+
+                    <div className="border-t px-5 py-3 bg-white">
+                      <div className="flex gap-2 items-center">
+                        <div className="w-7 h-7 bg-[#537D5D] text-white rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                          {user?.displayName?.charAt(0)?.toUpperCase() || "A"}
+                        </div>
+
+                        <input
+                          type="text"
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleComment()}
+                          placeholder="Add resolution details..."
+                          className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-sm outline-none focus:border-[#537D5D] transition"
+                        />
+
+                        <button
+                          onClick={handleResponseSubmit}
+                          disabled={commentLoading || !commentText.trim()}
+                          className="px-4 py-2 bg-[#537D5D] hover:bg-[#3f6147] text-white rounded-full text-sm font-semibold transition disabled:opacity-40"
+                        >
+                          {commentLoading ? "..." : "Post"}
+                        </button>
                       </div>
-                      <input
-                        type="text"
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleComment()}
-                        placeholder="Add an official comment..."
-                        className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-sm outline-none focus:border-[#537D5D] transition"
-                      />
-                      <button
-                        onClick={handleComment}
-                        disabled={commentLoading || !commentText.trim()}
-                        className="px-4 py-2 bg-[#537D5D] hover:bg-[#3f6147] text-white rounded-full text-sm font-semibold transition disabled:opacity-40"
-                      >
-                        {commentLoading ? "..." : "Post"}
-                      </button>
                     </div>
-                  </div>
+
+                  )}
 
                 </div>
               </div>
             </div>
           );
         })()}
-=======
-        </div>
-
-        {/* CARDS */}
-        <div className="grid md:grid-cols-3 gap-6">
-          {filteredIssues.map((issue) => (
-            <IssueCard
-              key={issue._id}
-              issue={{
-                ...issue,
-                image: issue.media?.[0]
-                  ? `${BASE_URL}${issue.media[0].url.replace(
-                      "http://localhost:5000",
-                      ""
-                    )}`
-                  : "/placeholder.jpg",
-              }}
-              setSelectedIssue={setSelectedIssue}
-              setIssues={setIssues}
-              isAuthority={true} // 🔥 important for next step
-            />
-          ))}
-        </div>
-
-        {/* POPUP (same as user dashboard) */}
-        {selectedIssue && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white w-[500px] h-[600px] rounded-xl flex flex-col">
-
-              <div className="p-4 border-b">
-                <h2 className="font-semibold text-lg">
-                  {selectedIssue.title}
-                </h2>
-              </div>
-
-              <img
-                src={selectedIssue.image}
-                className="w-full h-52 object-cover"
-              />
-
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {(selectedIssue.comments || []).map((comment, index) => (
-                  <div key={index} className="flex justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-[#537D5D]">
-                        {comment.displayName}
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        {comment.text}
-                      </p>
-                    </div>
-
-                    <span className="text-xs text-gray-400">
-                      {comment.likes?.length || 0}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="border-t p-3 flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Add a comment..."
-                  className="flex-1 border rounded-md px-3 py-2 text-sm outline-none"
-                />
-
-                <button className="text-[#537D5D] font-semibold">
-                  Post
-                </button>
-              </div>
-
-            </div>
-          </div>
-        )}
->>>>>>> 6ff68f33e072e17b0b84faeaaa02cf56eb9c0a00
       </div>
     </div>
   );
 };
 
-<<<<<<< HEAD
 export default AuthorityDashboard;
-=======
-export default AuthorityDashboard;
->>>>>>> 6ff68f33e072e17b0b84faeaaa02cf56eb9c0a00

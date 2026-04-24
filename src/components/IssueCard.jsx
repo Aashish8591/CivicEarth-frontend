@@ -1,7 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { Heart } from "lucide-react";
+import { useEffect } from "react";
+
+
 
 const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
+
+  const [showPopup, setShowPopup] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [localIssue, setLocalIssue] = useState(issue);
+
+  useEffect(() => {
+  setLocalIssue(issue);
+}, [issue]);
 
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
@@ -9,7 +20,7 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
   const userId = user?.id || user?._id;
 
   const isLiked = userId
-    ? issue.likes?.some((id) => id.toString() === userId.toString()) || false
+    ? localIssue.likes?.some((id) => id.toString() === userId.toString()) || false
     : false;
 
   // ================= LIKE =================
@@ -40,41 +51,116 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
   };
 
   // ================= STATUS UPDATE =================
- const updateStatus = async (newStatus) => {
-  // 🔒 BLOCK if already responded
-  if (issue.response?.images?.length > 0) {
-    alert("This issue is already resolved and cannot be modified");
-    return;
-  }
+  const updateStatus = async (newStatus) => {
+    if (localIssue.response?.images?.length > 0) {
+      alert("This issue is already resolved and cannot be modified");
+      return;
+    }
+
+    try {
+      await fetch(
+        `http://localhost:5000/api/reports/${issue._id}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+
+      setIssues((prev) =>
+        prev.map((item) =>
+          item._id === issue._id
+            ? { ...item, status: newStatus }
+            : item
+        )
+      );
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+const handleComment = async () => {
+  if (!commentText.trim()) return;
 
   try {
-    await fetch(
-      `http://localhost:5000/api/reports/${issue._id}/status`,
+    const res = await fetch(
+      `http://localhost:5000/api/reports/${issue._id}/comment`,
       {
-        method: "PATCH",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ text: commentText }),
       }
     );
 
+    const updatedReport = await res.json();
+
+    // 🔥 UPDATE LOCAL POPUP STATE
+    setLocalIssue(updatedReport);
+
+    // 🔥 UPDATE LIST
     setIssues((prev) =>
       prev.map((item) =>
-        item._id === issue._id
-          ? { ...item, status: newStatus }
-          : item
+        item._id === updatedReport._id ? updatedReport : item
       )
     );
 
+    setCommentText("");
   } catch (err) {
     console.error(err);
   }
 };
+const [likeLoading, setLikeLoading] = useState(false);
+const handleCommentLike = async (commentId) => {
+  if (likeLoading) return;
+  setLikeLoading(true);
 
+  // 🔥 HARD BLOCK DOUBLE CALL
+  // document.body.style.pointerEvents = "none";
+
+  try {
+    const res = await fetch(
+      `http://localhost:5000/api/reports/${localIssue._id}/comment/${commentId}/like`,
+      {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    const updated = await res.json();
+
+    setLocalIssue(updated);
+
+    setIssues((prev) =>
+      prev.map((item) =>
+        item._id === updated._id ? updated : item
+      )
+    );
+
+  } catch (err) {
+    console.log(err);
+  }
+
+  document.body.style.pointerEvents = "auto";
+  setLikeLoading(false);
+};
   return (
-    <div className="bg-white rounded-xl shadow p-4">
+    <div
+        className="bg-white rounded-xl shadow p-4 cursor-pointer"
+        onClick={() => {
+          if (isAuthority && setSelectedIssue) {
+            setSelectedIssue(issue);   // ✅ authority popup
+          } else {
+            setShowPopup(true);        // ✅ user popup
+          }
+        }}
+      >
 
       {/* USER */}
       <div className="flex items-center gap-2 mb-2">
@@ -100,32 +186,55 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
       {/* TITLE */}
       <h3 className="font-semibold text-lg">{issue.title}</h3>
 
+      {/* CATEGORY BADGE */}
+      <span className={`inline-block mt-1 px-2 py-1 rounded text-white text-xs font-semibold
+        ${
+          issue.category === "garbage" ? "bg-red-500" :
+          issue.category === "water" ? "bg-blue-500" :
+          issue.category === "road" ? "bg-yellow-500" :
+          issue.category === "air" ? "bg-gray-600" :
+          issue.category === "noise" ? "bg-purple-500" :
+          "bg-black"
+        }`}>
+        {issue.category || "other"}
+      </span>
+
       {/* DESCRIPTION */}
       <p className="text-sm text-gray-600">
         {issue.description?.slice(0, 60)}...
         <span
-          onClick={() => setSelectedIssue(issue)}
+         onClick={(e) => {
+            e.stopPropagation();
+
+            if (isAuthority && setSelectedIssue) {
+              setSelectedIssue(issue);
+            } else {
+              setShowPopup(true);
+            }
+          }}
+          
           className="text-[#537D5D] cursor-pointer ml-1"
         >
           more
         </span>
       </p>
 
-      {/* 🔥 RESPONSE PREVIEW */}
-      {issue.response && issue.response.images?.length > 0 && (
-      <div className="mt-2 text-xs text-green-700 bg-green-50 p-2 rounded">
-        ✔ Authority Responded
-        <p className="text-gray-600 mt-1 truncate">
-          {issue.response.text}
-        </p>
-      </div>
-    )}
 
-    {issue.response?.images?.length > 0 && (
-      <span className="text-xs px-2 py-1 rounded bg-green-200 text-green-800 mt-1 inline-block">
-        ✔ Resolved with Proof
-      </span>
-    )}
+      {/* RESPONSE PREVIEW */}
+      {localIssue.response && localIssue.response.images?.length > 0 && (
+        <div className="mt-2 text-xs text-green-700 bg-green-50 p-2 rounded">
+          ✔ Authority Responded
+          <p className="text-gray-600 mt-1 truncate">
+            {localIssue.response.text}
+          </p>
+        </div>
+      )}
+
+      {localIssue.response?.images?.length > 0 && (
+        <span className="text-xs px-2 py-1 rounded bg-green-200 text-green-800 mt-1 inline-block">
+          ✔ Resolved with Proof
+        </span>
+      )}
 
       {/* LOCATION */}
       <div className="flex justify-between text-xs text-gray-500 mt-2">
@@ -163,10 +272,8 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
 
       {/* STATUS + PRIORITY */}
       <div className="flex justify-between items-center mt-2 flex-wrap gap-1">
-
-
         <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
-          {issue.status}
+          {localIssue.status}
         </span>
 
         <span className={`text-xs px-2 py-1 rounded ${
@@ -186,16 +293,15 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
         )}
       </div>
 
-      {/* ================= ACTIONS ================= */}
+      {/* ACTIONS */}
       <div className="flex gap-4 mt-3 text-sm items-center flex-wrap">
 
-        {/* USER ACTIONS */}
         {!isAuthority && (
           <>
-            <button
-              onClick={handleLike}
-              className="flex items-center gap-1"
-            >
+            <button onClick={(e) => {
+                  e.stopPropagation();
+                  handleLike();
+                }} className="flex items-center gap-1">
               <Heart
                 size={18}
                 className={`transition ${
@@ -204,22 +310,25 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
                     : "text-gray-400"
                 }`}
               />
-              <span>{issue.likes?.length || 0}</span>
+              <span>{localIssue.likes?.length || 0}</span>
             </button>
 
             <button
-              onClick={() => setSelectedIssue(issue)}
-              className="text-gray-500"
-            >
-              Comment
-            </button>
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowPopup(true);
+                  }}
+                >
+                  Comment
+                </button>
+
+            
+
           </>
         )}
 
-        {/* AUTHORITY ACTIONS */}
-        {isAuthority && !(issue.response?.images?.length > 0) && (
-        <div className="flex gap-2 mt-2 flex-wrap">
-
+        {isAuthority && !(localIssue.response?.images?.length > 0) && (
+          <div className="flex gap-2 mt-2 flex-wrap">
             <button
               onClick={() => updateStatus("in_progress")}
               className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded text-xs"
@@ -227,12 +336,15 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
               Start
             </button>
 
-            <button
-              onClick={() => updateStatus("resolved")}
+            {/* <button
+              onClick={(e) => {
+                e.stopPropagation();
+                updateStatus("resolved");
+              }}
               className="px-3 py-1 bg-green-100 text-green-700 rounded text-xs"
             >
               Resolve
-            </button>
+            </button> */}
 
             <button
               onClick={() => updateStatus("rejected")}
@@ -240,10 +352,152 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
             >
               Reject
             </button>
-
           </div>
         )}
       </div>
+      {showPopup && (
+  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+    <div className="bg-white w-[900px] h-[520px] rounded-xl flex overflow-hidden relative">
+
+      {/* CLOSE */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();   // 🔥 IMPORTANT
+          setShowPopup(false);
+        }}
+        className="absolute top-3 right-5 z-50 bg-white rounded-full p-1 shadow"
+      >
+        ✕
+      </button>
+
+      {/* IMAGE */}
+      <div className="w-1/2 bg-black">
+        <img
+          src={issue.media?.[0]?.url}
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      {/* RIGHT */}
+      <div className="w-1/2 flex flex-col overflow-y-auto">
+
+        {/* USER */}
+        <div className="flex items-center gap-2 p-4 border-b">
+          <div className="w-8 h-8 bg-[#537D5D] text-white rounded-full flex items-center justify-center text-sm">
+            {issue.displayName?.charAt(0)}
+          </div>
+          <p className="font-semibold">{issue.displayName}</p>
+        </div>
+
+        {/* DETAILS */}
+        <div className="p-4 border-b text-sm">
+          <p className="font-semibold">{issue.title}</p>
+          <p className="text-gray-600 mt-1">{issue.description}</p>
+          <p className="text-xs text-gray-500 mt-2">
+            📍 {issue.city}
+          </p>
+        </div>
+
+        {/* STATUS */}
+        <div className="p-4 text-sm border-b">
+          Status: <b>{localIssue.status}</b>
+        </div>
+
+        {/* RESPONSE */}
+        <div className="p-4 border-b">
+          <p className="font-semibold">Authority Response</p>
+
+          {localIssue.response?.text ? (
+            <>
+              <p className="text-sm mt-1">
+                {localIssue.response.text}
+              </p>
+
+              {localIssue.response.images?.[0] && (
+                <img
+                  src={localIssue.response.images[0]}
+                  className="w-full h-40 object-cover mt-2 rounded"
+                />
+              )}
+            </>
+          ) : (
+            <p className="text-gray-400 text-sm mt-1">
+              No response yet
+            </p>
+          )}
+        </div>
+
+        {/* COMMENTS */}
+        <div className="p-4 border-b space-y-3">
+          <p className="text-xs text-gray-400 font-medium uppercase">
+            Comments ({localIssue.comments?.length || 0})
+          </p>
+
+          {localIssue.comments?.length > 0 ? (
+            localIssue.comments.map((c) => {
+              const isLiked = c.likes?.some(
+                (id) => id.toString() === userId
+              );
+
+              return (
+                <div key={c._id} className="flex justify-between items-center">
+                  <div className="text-sm">
+                    <span className="font-semibold mr-2">
+                      {c.displayName}
+                    </span>
+                    {c.text}
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCommentLike(c._id);
+                    }}
+                    className="flex items-center gap-1"
+                  >
+                    <Heart
+                      size={16}
+                      className={
+                        isLiked
+                          ? "text-red-500 fill-red-500"
+                          : "text-gray-400"
+                      }
+                    />
+                    <span className="text-xs text-gray-600">
+                      {c.likes?.length || 0}
+                    </span>
+                  </button>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-gray-400 text-sm">No comments yet</p>
+          )}
+        </div>
+
+        {/* COMMENT INPUT */}
+        <div className="p-3 border-t">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Add a comment..."
+              className="flex-1 border rounded-md px-3 py-2 text-sm"
+            />
+            <button
+              onClick={handleComment}
+              className="text-[#537D5D] font-semibold"
+            >
+              Post
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+)}
 
     </div>
   );

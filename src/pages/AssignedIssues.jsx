@@ -62,7 +62,10 @@ const AssignedIssues = () => {
         const data = await res.json();
 
             // ✅ update popup
-            setSelectedIssue(data.report);
+            setSelectedIssue(prev => ({
+              ...prev,
+              ...data.report
+            }));
 
             // ✅ update cards also
             setIssues((prev) =>
@@ -112,10 +115,8 @@ const AssignedIssues = () => {
                 key={issue._id}
                 issue={{
                   ...issue,
-                  image: `${BASE_URL}${issue.media?.[0]?.url?.replace(
-                    "https://civicearth.onrender.com",
-                    ""
-                  )}`,
+                  image: issue.media?.[0]?.url,
+                  
                 }}
                 setIssues={setIssues}
                 setSelectedIssue={setSelectedIssue}
@@ -142,7 +143,7 @@ const AssignedIssues = () => {
             {/* IMAGE */}
             <div className="w-1/2 bg-black">
               <img
-                src={selectedIssue.image}
+                src={selectedIssue.media?.[0]?.url}
                 alt="report"
                 className="w-full h-full object-cover"
               />
@@ -194,18 +195,24 @@ const AssignedIssues = () => {
               </div>
 
               {/* ✅ SHOW RESPONSE */}
-              {selectedIssue.response && selectedIssue.response.images?.length > 0 ? (
+      
+              {(selectedIssue.authorityResponse || selectedIssue.response) ? (
                 <div className="p-4 border-b">
                   <p className="font-semibold">Authority Response</p>
+
                   <p className="text-sm mt-1">
-                    {selectedIssue.response.text}
+                    {selectedIssue.authorityResponse?.text || selectedIssue.response?.text}
                   </p>
-                  {selectedIssue.response?.images?.[0] && (
+
+                  {(selectedIssue.authorityResponse?.images?.[0] || selectedIssue.response?.images?.[0]) && (
                     <img
-                        src={selectedIssue.response.images[0]}
-                        className="w-full h-40 object-cover mt-2 rounded"
+                      src={
+                        selectedIssue.authorityResponse?.images?.[0] ||
+                        selectedIssue.response?.images?.[0]
+                      }
+                      className="w-full h-40 object-cover mt-2 rounded"
                     />
-                    )}
+                  )}
                 </div>
               ) : (
                 /* ✅ SHOW ONLY FOR CORRECT AUTHORITY */
