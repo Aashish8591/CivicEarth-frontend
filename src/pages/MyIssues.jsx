@@ -165,7 +165,12 @@ const MyIssues = () => {
               {/* IMAGE */}
               <div className="w-1/2 bg-black">
                 <img
-                  src={selectedIssue.image}
+                src={
+                  selectedIssue.image?.includes("localhost")
+                    ? selectedIssue.image.replace("http://localhost:5000", API_BASE)
+                    : selectedIssue.image
+                }
+              
                   className="w-full h-full object-cover"
                 />
               </div>

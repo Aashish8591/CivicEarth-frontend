@@ -144,7 +144,11 @@ const AssignedIssues = () => {
             {/* IMAGE */}
             <div className="w-1/2 bg-black">
               <img
-                src={selectedIssue.media?.[0]?.url}
+                src={
+                  selectedIssue.media?.[0]?.url?.includes("localhost")
+                    ? selectedIssue.media[0].url.replace("http://localhost:5000", API_BASE)
+                    : selectedIssue.media?.[0]?.url
+                }
                 alt="report"
                 className="w-full h-full object-cover"
               />

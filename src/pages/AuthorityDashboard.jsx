@@ -270,8 +270,12 @@ const AuthorityDashboard = () => {
 
                 {/* LEFT — IMAGE + OVERLAY INFO */}
                 <div className="w-[45%] relative flex-shrink-0">
-                  <img
-                    src={selectedIssue.image}
+                 <img
+                    src={
+                      selectedIssue.image?.includes("localhost")
+                        ? selectedIssue.image.replace("http://localhost:5000", API_BASE)
+                        : selectedIssue.image
+                    }
                     className="w-full h-full object-cover"
                     alt="issue"
                   />
