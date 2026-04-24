@@ -237,14 +237,15 @@ const UserDashboard = () => {
           {sortedIssues.map((issue) => (
             <IssueCard
               key={issue._id}
-              issue={{
-                ...issue,
-                image: issue.media?.[0]
-                ? issue.media[0].url.startsWith("http")
-                  ? issue.media[0].url
-                  : `${API_BASE}${issue.media[0].url}`
-                : "/placeholder.jpg",
-              }}
+              issue={issue}
+              // issue={{
+              //   ...issue,
+              //   image: issue.media?.[0]
+              //   ? issue.media[0].url.startsWith("http")
+              //     ? issue.media[0].url
+              //     : `${API_BASE}${issue.media[0].url}`
+              //   : "/placeholder.jpg",
+              // }}
               setSelectedIssue={setSelectedIssue}
               setIssues={setIssues}
             />

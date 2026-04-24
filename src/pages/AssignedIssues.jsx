@@ -114,11 +114,12 @@ const AssignedIssues = () => {
             {issues.map(issue => (
               <IssueCard
                 key={issue._id}
-                issue={{
-                  ...issue,
-                  image: issue.media?.[0]?.url,
+                // issue={{
+                //   ...issue,
+                //   image: issue.media?.[0]?.url,
                   
-                }}
+                // }}
+                issue={issue}
                 setIssues={setIssues}
                 setSelectedIssue={setSelectedIssue}
                 isAuthority={true}

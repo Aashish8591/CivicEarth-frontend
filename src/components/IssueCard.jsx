@@ -176,12 +176,10 @@ const handleCommentLike = async (commentId) => {
       {/* IMAGE */}
       <img
         src={
-          issue.image
-            ? issue.image.startsWith("http")
-              ? issue.image
-              : `${import.meta.env.VITE_API_URL}${issue.image}`
-            : "https://via.placeholder.com/400"
+          issue.media?.[0]?.url ||
+          "https://via.placeholder.com/400"
         }
+        className="w-full h-40 object-cover rounded"
       />
 
       {/* TITLE */}
@@ -372,12 +370,15 @@ const handleCommentLike = async (commentId) => {
       </button>
 
       {/* IMAGE */}
-      <div className="w-1/2 bg-black">
-        <img
-          src={issue.media?.[0]?.url}
-          className="w-full h-full object-cover"
-        />
-      </div>
+       <div className="w-1/2 bg-black">
+              <img
+                src={
+                  issue.media?.[0]?.url ||
+                  "https://via.placeholder.com/400"
+                }
+                className="w-full h-full object-cover"
+              />
+            </div>
 
       {/* RIGHT */}
       <div className="w-1/2 flex flex-col overflow-y-auto">

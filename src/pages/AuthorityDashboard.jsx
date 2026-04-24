@@ -131,10 +131,10 @@ const AuthorityDashboard = () => {
     const data = await res.json();
 
     if (res.ok) {
-      setSelectedIssue(data.report);
+      setSelectedIssue({ ...data.report, image: selectedIssue.image });
       setIssues((prev) =>
         prev.map((i) =>
-          i._id === data.report._id ? data.report : i
+          i._id === data.report._id ? { ...data.report, image: selectedIssue.image } : i
         )
       );
       setCommentText("");
@@ -229,14 +229,15 @@ const AuthorityDashboard = () => {
             {filteredIssues.map((issue) => (
               <IssueCard
                 key={issue._id}
-                issue={{
-                  ...issue,
-                  image: issue.media?.[0]
-                  ? issue.media[0].url.startsWith("http")
-                    ? issue.media[0].url
-                    : `${API_BASE}${issue.media[0].url}`
-                  : "/placeholder.jpg",
-                }}
+                issue={issue}
+                // issue={{
+                //   ...issue,
+                //   image: issue.media?.[0]
+                //   ? issue.media[0].url.startsWith("http")
+                //     ? issue.media[0].url
+                //     : `${API_BASE}${issue.media[0].url}`
+                //   : "/placeholder.jpg",
+                // }}
                 setSelectedIssue={setSelectedIssue}
                 setIssues={setIssues}
                 isAuthority={true}
@@ -359,44 +360,38 @@ const AuthorityDashboard = () => {
             )}
 
                   {/* ACTION BUTTONS */}
-                  {selectedIssue?.status !== "resolved" && isAssignedAuthority && (
-                    <div className="px-5 py-3 border-b bg-gray-50">
-                      <p className="text-xs text-gray-400 font-medium mb-2 uppercase tracking-wide">Update Status</p>
-                      <div className="flex gap-2 flex-wrap">
-                        <button
-                          disabled={actionLoading !== null || selectedIssue.status === "in_progress"}
-                          onClick={() => updateStatus("in_progress")}
-                          className="flex items-center gap-1.5 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          <PlayCircle size={14} />
-                          {actionLoading === "in_progress" ? "Starting..." : "Start"}
-                        </button>
-                        {/* <button
-                          disabled={actionLoading !== null || selectedIssue.status === "resolved"}
-                          onClick={() => updateStatus("resolved")}
-                          className="flex items-center gap-1.5 px-4 py-2 bg-[#537D5D] hover:bg-[#3f6147] text-white rounded-lg text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
-                        > */}
-                          {/* <CheckCircle size={14} />
-                          {actionLoading === "resolved" ? "Resolving..." : "Resolve"}
-                        </button> */}
-                        <button
-                          disabled={actionLoading !== null || selectedIssue.status === "rejected"}
-                          onClick={() => updateStatus("rejected")}
-                          className="flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          <XCircle size={14} />
-                          {actionLoading === "rejected" ? "Rejecting..." : "Reject"}
-                        </button>
+                  {isAssignedAuthority && (
+                    (selectedIssue?.status === "resolved" || selectedIssue?.status === "rejected") ? (
+                      <div className="px-5 py-3 border-b bg-green-50 flex items-center gap-2">
+                        <CheckCircle size={16} className="text-green-600" />
+                        <p className="text-sm text-green-700 font-medium">
+                          {selectedIssue.status === "rejected" ? "This issue has been rejected." : "This issue has been resolved."}
+                        </p>
                       </div>
-                    </div>
-                  )} : (
-                    <div className="px-5 py-3 border-b bg-green-50 flex items-center gap-2">
-                      <CheckCircle size={16} className="text-green-600" />
-                      <p className="text-sm text-green-700 font-medium">
-                        {selectedIssue.status === "rejected" ? "This issue has been rejected." : "This issue has been resolved."}
-                      </p>
-                    </div>
-                  )
+                    ) : (
+                      <div className="px-5 py-3 border-b bg-gray-50">
+                        <p className="text-xs text-gray-400 font-medium mb-2 uppercase tracking-wide">Update Status</p>
+                        <div className="flex gap-2 flex-wrap">
+                          <button
+                            disabled={actionLoading !== null || selectedIssue.status === "in_progress"}
+                            onClick={() => updateStatus("in_progress")}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-white rounded-lg text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            <PlayCircle size={14} />
+                            {actionLoading === "in_progress" ? "Starting..." : "Start"}
+                          </button>
+                          <button
+                            disabled={actionLoading !== null || selectedIssue.status === "rejected"}
+                            onClick={() => updateStatus("rejected")}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            <XCircle size={14} />
+                            {actionLoading === "rejected" ? "Rejecting..." : "Reject"}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  )}
                 
 
                   {/* COMMENTS */}
