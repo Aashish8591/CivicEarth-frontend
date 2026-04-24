@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Search, X, Heart, MapPin, Clock, CheckCircle, XCircle, PlayCircle, MessageCircle } from "lucide-react";
 import UserNavbar from "../components/UserNavbar";
 import IssueCard from "../components/IssueCard";
+import API_BASE from "../utils/api";
 
 const STATUS_CONFIG = {
   submitted: { label: "Submitted", bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-500" },
@@ -27,7 +28,7 @@ const AuthorityDashboard = () => {
   const [actionLoading, setActionLoading] = useState(null);
   const [commentLoading, setCommentLoading] = useState(false);
 
-  const BASE_URL = "http://localhost:5000";
+  
   const user = JSON.parse(localStorage.getItem("user"));
   const isAssignedAuthority =
   selectedIssue?.assignedAuthority?._id === user?.authorityId ||
@@ -36,7 +37,7 @@ const AuthorityDashboard = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    fetch(`${BASE_URL}/api/reports`, {
+    fetch(`${API_BASE}/api/reports`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -56,7 +57,7 @@ const AuthorityDashboard = () => {
     setActionLoading(newStatus);
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`${BASE_URL}/api/reports/${selectedIssue._id}/status`, {
+      const res = await fetch(`${API_BASE}/api/reports/${selectedIssue._id}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -86,7 +87,7 @@ const AuthorityDashboard = () => {
     setCommentLoading(true);
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`${BASE_URL}/api/reports/${selectedIssue._id}/comment`, {
+      const res = await fetch(`${API_BASE}/api/reports/${selectedIssue._id}/comment`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -115,8 +116,9 @@ const AuthorityDashboard = () => {
     const formData = new FormData();
     formData.append("text", commentText);
 
+    
     const res = await fetch(
-      `${BASE_URL}/api/reports/${selectedIssue._id}/response`,
+     `${API_BASE}/api/reports/${selectedIssue._id}/response`,
       {
         method: "POST",
         headers: {
@@ -230,8 +232,10 @@ const AuthorityDashboard = () => {
                 issue={{
                   ...issue,
                   image: issue.media?.[0]
-                    ? `${BASE_URL}${issue.media[0].url.replace("http://localhost:5000", "")}`
-                    : "/placeholder.jpg",
+                  ? issue.media[0].url.startsWith("http")
+                    ? issue.media[0].url
+                    : `${API_BASE}${issue.media[0].url}`
+                  : "/placeholder.jpg",
                 }}
                 setSelectedIssue={setSelectedIssue}
                 setIssues={setIssues}

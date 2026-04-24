@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Heart } from "lucide-react";
 import { useEffect } from "react";
+import API_BASE from "../utils/api";
 
 
 
@@ -40,7 +41,7 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
         )
       );
 
-      await fetch(`http://localhost:5000/api/reports/${issue._id}/like`, {
+      await fetch(`${API_BASE}/api/reports/${issue._id}/like`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -59,7 +60,7 @@ const IssueCard = ({ issue, setSelectedIssue, setIssues, isAuthority }) => {
 
     try {
       await fetch(
-        `http://localhost:5000/api/reports/${issue._id}/status`,
+        `${API_BASE}/api/reports/${issue._id}/status`,
         {
           method: "PATCH",
           headers: {
@@ -88,7 +89,7 @@ const handleComment = async () => {
 
   try {
     const res = await fetch(
-      `http://localhost:5000/api/reports/${issue._id}/comment`,
+      `${API_BASE}/api/reports/${issue._id}/comment`,
       {
         method: "POST",
         headers: {
@@ -126,7 +127,7 @@ const handleCommentLike = async (commentId) => {
 
   try {
     const res = await fetch(
-      `http://localhost:5000/api/reports/${localIssue._id}/comment/${commentId}/like`,
+      `${API_BASE}/api/reports/${localIssue._id}/comment/${commentId}/like`,
       {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
@@ -175,12 +176,12 @@ const handleCommentLike = async (commentId) => {
       {/* IMAGE */}
       <img
         src={
-          issue.image && issue.image !== "http://localhost:5000undefined"
-            ? issue.image
+          issue.image
+            ? issue.image.startsWith("http")
+              ? issue.image
+              : `${import.meta.env.VITE_API_URL}${issue.image}`
             : "https://via.placeholder.com/400"
         }
-        alt="report"
-        className="w-full h-40 object-cover rounded-lg mb-2"
       />
 
       {/* TITLE */}

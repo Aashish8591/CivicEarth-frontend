@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import UserNavbar from "../components/UserNavbar";
+import API_BASE from "../utils/api";
 
 const ReportIssue = () => {
   const [title, setTitle] = useState("");
@@ -46,7 +47,7 @@ const ReportIssue = () => {
     formData.append("media", file);
 
     try {
-      await fetch("http://localhost:5000/api/reports", {
+      await fetch(`${API_BASE}/api/reports`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`

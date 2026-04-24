@@ -3,6 +3,7 @@ import { Search, X, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import UserNavbar from "../components/UserNavbar";
 import IssueCard from "../components/IssueCard";
+import API_BASE from "../utils/api";
 
 const UserDashboard = () => {
   const [issues, setIssues] = useState([]);
@@ -15,7 +16,7 @@ const UserDashboard = () => {
   const [commentText, setCommentText] = useState("");
 
   const navigate = useNavigate();
-  const BASE_URL = "http://localhost:5000";
+  
 
   const user = JSON.parse(localStorage.getItem("user"));
   const userId = user?.id || user?._id;
@@ -24,7 +25,7 @@ const UserDashboard = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("http://localhost:5000/api/reports", {
+    fetch(`${API_BASE}/api/reports`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -42,7 +43,7 @@ const UserDashboard = () => {
 
     try {
       const res = await fetch(
-        `${BASE_URL}/api/reports/${selectedIssue._id}/comment`,
+        `${API_BASE}/api/reports/${selectedIssue._id}/comment`,
         {
           method: "POST",
           headers: {
@@ -100,8 +101,8 @@ const UserDashboard = () => {
 
     try {
       await fetch(
-        `${BASE_URL}/api/reports/${selectedIssue._id}/comment/${commentId}/like`,
-        {
+      `${API_BASE}/api/reports/${selectedIssue._id}/comment/${commentId}/like`,
+      {
           method: "PUT",
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -239,11 +240,10 @@ const UserDashboard = () => {
               issue={{
                 ...issue,
                 image: issue.media?.[0]
-                  ? `${BASE_URL}${issue.media[0].url.replace(
-                      "http://localhost:5000",
-                      ""
-                    )}`
-                  : "/placeholder.jpg",
+                ? issue.media[0].url.startsWith("http")
+                  ? issue.media[0].url
+                  : `${API_BASE}${issue.media[0].url}`
+                : "/placeholder.jpg",
               }}
               setSelectedIssue={setSelectedIssue}
               setIssues={setIssues}

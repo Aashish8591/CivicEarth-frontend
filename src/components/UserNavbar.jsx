@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import API_BASE from "../utils/api";
 
 const UserNavbar = () => {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ const UserNavbar = () => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetch("http://localhost:5000/api/user/update", {
+      const res = await fetchh(`${API_BASE}/api/user/update`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

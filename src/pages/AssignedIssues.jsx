@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import UserNavbar from "../components/UserNavbar";
 import IssueCard from "../components/IssueCard";
+import API_BASE from "../utils/api";
 
 const AssignedIssues = () => {
   const [issues, setIssues] = useState([]);
@@ -10,7 +11,7 @@ const AssignedIssues = () => {
   const [responseText, setResponseText] = useState("");
   const [responseImage, setResponseImage] = useState(null);
 
-  const BASE_URL = "http://localhost:5000";
+ 
 
   // 🔥 GET LOGGED USER
   const user = JSON.parse(localStorage.getItem("user"));
@@ -18,7 +19,7 @@ const AssignedIssues = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("http://localhost:5000/api/reports/assigned/me", {
+    fetch(`${API_BASE}/api/reports/assigned/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -43,7 +44,7 @@ const AssignedIssues = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/reports/${selectedIssue._id}/respond`,
+        `${API_BASE}/api/reports/${selectedIssue._id}/respond`,
         {
           method: "POST",
           headers: {

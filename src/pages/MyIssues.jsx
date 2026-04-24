@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Search, X, Heart } from "lucide-react";
 import UserNavbar from "../components/UserNavbar";
 import IssueCard from "../components/IssueCard";
+import API_BASE from "../utils/api";
 
 const MyIssues = () => {
   const [issues, setIssues] = useState([]);
@@ -9,7 +10,7 @@ const MyIssues = () => {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [commentText, setCommentText] = useState("");
 
-  const BASE_URL = "http://localhost:5000";
+  
 
   const user = JSON.parse(localStorage.getItem("user"));
   const userId = user?.id || user?._id;
@@ -17,7 +18,7 @@ const MyIssues = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("http://localhost:5000/api/reports/my-reports", {
+    fetch(`${API_BASE}/api/reports/my-reports`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -28,11 +29,11 @@ const MyIssues = () => {
         const updated = (data.reports || []).map((issue) => ({
           ...issue,
          image:
-        issue.media && issue.media.length > 0
+       issue.media && issue.media.length > 0
           ? issue.media[0].url.startsWith("http")
             ? issue.media[0].url
-            : `http://localhost:5000${issue.media[0].url}`
-          : "",
+            : `${API_BASE}${issue.media[0].url}`
+          : ""
         }));
 
         setIssues(updated);
@@ -48,7 +49,7 @@ const MyIssues = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/reports/${selectedIssue._id}/comment`,
+       `${API_BASE}/api/reports/${selectedIssue._id}/comment`,
         {
           method: "POST",
           headers: {
@@ -84,7 +85,7 @@ const MyIssues = () => {
 
   try {
     const res = await fetch(
-      `http://localhost:5000/api/reports/${selectedIssue._id}/comment/${commentId}/like`,
+      `${API_BASE}/api/reports/${selectedIssue._id}/comment/${commentId}/like`,
       {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
