@@ -44,7 +44,7 @@ const ReportIssue = () => {
     formData.append("area", area);
     formData.append("latitude", location.latitude);
     formData.append("longitude", location.longitude);
-    formData.append("media", file);
+    formData.append("file", file);
 
     try {
       await fetch(`${API_BASE}/api/reports`, {

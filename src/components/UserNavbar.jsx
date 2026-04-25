@@ -39,7 +39,7 @@ const UserNavbar = () => {
     try {
       const token = localStorage.getItem("token");
 
-      const res = await fetchh(`${API_BASE}/api/user/update`, {
+      const res = await fetch(`${API_BASE}/api/user/update`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
